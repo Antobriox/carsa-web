@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ImageIcon, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { useForm, useWatch, type Resolver } from 'react-hook-form'
 
-import { AdminFeedbackBanner } from '@/components/admin/admin-feedback-banner'
+import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -67,6 +67,7 @@ export function ServicesAdminPanel() {
     variant: 'success' | 'error'
     text: string
   } | null>(null)
+  const dismissFeedback = useCallback(() => setFeedback(null), [])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AdminService | null>(null)
@@ -317,11 +318,14 @@ export function ServicesAdminPanel() {
         </Button>
       </div>
 
-      {feedback ? (
-        <AdminFeedbackBanner variant={feedback.variant} message={feedback.text} />
-      ) : null}
+      <AdminFloatingToast
+        open={Boolean(feedback?.text)}
+        variant={feedback?.variant ?? 'success'}
+        message={feedback?.text ?? ''}
+        onDismiss={dismissFeedback}
+      />
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+      <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <TireLoadingIcon className="size-8" aria-label="Cargando servicios" />

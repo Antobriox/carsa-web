@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react'
 
 import { redirectAdminToPanel } from '@/lib/auth/redirect-admin-from-public'
 import { CatalogPageShell } from '@/components/public/catalog-page-shell'
-import { BatteryProductGrid } from '@/components/public/catalog-product-grids'
+import { BateriasCatalogLive } from '@/components/public/baterias-catalog-live'
 import {
   Card,
   CardDescription,
@@ -29,7 +29,7 @@ export default async function BateriasPage() {
   if (error) {
     return (
       <CatalogPageShell>
-        <div className="mx-auto flex max-w-6xl flex-col items-center px-4 py-16 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center py-16 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
           <Card className="max-w-lg border-destructive/30 bg-card/90">
             <CardHeader>
               <div className="flex items-center gap-2 text-destructive">
@@ -49,7 +49,7 @@ export default async function BateriasPage() {
   return (
     <CatalogPageShell>
       <div className="border-b border-border/60 bg-background">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-6xl py-10 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:py-12 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-carsa-primary">
@@ -68,7 +68,7 @@ export default async function BateriasPage() {
               href="/"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
-                'h-11 shrink-0 border-carsa-tertiary/50'
+                'h-11 w-full shrink-0 border-carsa-tertiary/50 sm:w-auto'
               )}
             >
               Volver al inicio
@@ -77,13 +77,13 @@ export default async function BateriasPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-6xl py-12 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:py-14 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         {batteries.length === 0 ? (
           <p className="text-center text-muted-foreground">
             No hay baterías activas en el catálogo.
           </p>
         ) : (
-          <BatteryProductGrid batteries={batteries} />
+          <BateriasCatalogLive batteries={batteries} />
         )}
       </div>
     </CatalogPageShell>

@@ -6,6 +6,7 @@ import { TireProductGrid } from '@/components/public/catalog-product-grids'
 import { buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useTiresInventoryRealtime } from '@/hooks/use-catalog-inventory-realtime'
 import { tireMatchesQuery } from '@/lib/catalog-filters'
 import { cn } from '@/lib/utils'
 import { joinBrandName, type CatalogTire } from '@/types/catalog'
@@ -20,6 +21,7 @@ export function TiresCatalogWithFilters({
   tires: CatalogTire[]
   initialSearch?: string
 }) {
+  const liveTires = useTiresInventoryRealtime(tires)
   const [searchText, setSearchText] = useState(initialSearch)
   const [brand, setBrand] = useState<string>(ALL_BRANDS)
   const [rim, setRim] = useState<string>(ALL_RIMS)
@@ -27,21 +29,21 @@ export function TiresCatalogWithFilters({
 
   const brandOptions = useMemo(() => {
     const set = new Set<string>()
-    for (const t of tires) {
+    for (const t of liveTires) {
       const b = joinBrandName(t.tire_brands)
       if (b) set.add(b)
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'))
-  }, [tires])
+  }, [liveTires])
 
   const rimOptions = useMemo(() => {
     const set = new Set<number>()
-    for (const t of tires) set.add(t.rim)
+    for (const t of liveTires) set.add(t.rim)
     return Array.from(set).sort((a, b) => a - b)
-  }, [tires])
+  }, [liveTires])
 
   const filtered = useMemo(() => {
-    return tires.filter((t) => {
+    return liveTires.filter((t) => {
       if (brand !== ALL_BRANDS) {
         const b = joinBrandName(t.tire_brands)
         if (b !== brand) return false
@@ -52,7 +54,7 @@ export function TiresCatalogWithFilters({
       if (searchText.trim() && !tireMatchesQuery(searchText, t)) return false
       return true
     })
-  }, [tires, brand, rim, sizeContains, searchText])
+  }, [liveTires, brand, rim, sizeContains, searchText])
 
   const clearFilters = () => {
     setSearchText('')
@@ -68,7 +70,7 @@ export function TiresCatalogWithFilters({
     searchText.trim() !== ''
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6 sm:py-12">
+    <div className="mx-auto max-w-6xl space-y-8 py-10 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:py-12 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
       <div className="rounded-2xl border border-border/80 bg-card/60 p-5 shadow-sm ring-1 ring-white/5 sm:p-6">
         <p className="text-xs font-semibold uppercase tracking-wider text-carsa-primary">
           Filtros

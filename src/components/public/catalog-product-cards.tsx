@@ -7,8 +7,10 @@ import {
   Battery,
   CircleDot,
   CircleGauge,
+  MessageCircle,
   Minus,
   Plus,
+  ShoppingBag,
   Sparkles,
   Star,
   Wrench,
@@ -30,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useCart } from '@/context/cart-context'
+import { useCatalogCartAdd } from '@/hooks/use-catalog-cart-add'
 import { formatMxn } from '@/lib/format'
 import {
   resolveBatteryDisplayImage,
@@ -59,7 +61,8 @@ function dashOr(value: string | null | undefined): string {
 export function TireCard({ tire }: { tire: CatalogTire }) {
   const [open, setOpen] = useState(false)
   const [qty, setQty] = useState(1)
-  const { addTire } = useCart()
+  const { tryAddToCart, adminNotice, dismissAdminNotice, authLoading } =
+    useCatalogCartAdd()
   const brand = joinBrandName(tire.tire_brands)
   const lowStock = tire.stock > 0 && tire.stock < 5
   const tireImageSrc = resolveTireDisplayImage(tire)
@@ -69,7 +72,14 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
     maxQty > 0 ? Math.min(Math.max(1, qty), maxQty) : 1
   const lineTotal = unitPrice * (maxQty > 0 ? safeQty : 0)
 
+  const tireWhatsApp = buildWhatsAppUrl(
+    `Hola CARSA, me interesa cotizar la llanta ${tire.name}${
+      brand ? ` (${brand})` : ''
+    }. Medida ${tire.size}, rin ${tire.rim}.`
+  )
+
   const handleDialogOpenChange = (next: boolean) => {
+    if (!next) dismissAdminNotice()
     if (next) setQty(1)
     setOpen(next)
   }
@@ -226,14 +236,37 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
 
               {maxQty > 0 ? (
                 <div className="mt-auto shrink-0 space-y-2 border-t border-border/50 pt-2">
-                  <div className="rounded-lg border border-border/60 bg-muted/10 p-2.5 ring-1 ring-white/[0.03] sm:p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                        Cantidad
-                      </p>
+                  <div className="rounded-lg border border-border/60 bg-muted/10 p-3 ring-1 ring-white/[0.03] sm:p-3.5">
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          Cantidad
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {tire.stock <= 0 ? (
+                            <span className="text-xs font-medium text-destructive">
+                              Sin existencias
+                            </span>
+                          ) : lowStock ? (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-500/45 bg-amber-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-amber-100"
+                            >
+                              Pocas: {maxQty} disp.
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[0.7rem] font-medium tabular-nums text-emerald-100"
+                            >
+                              En stock · {maxQty} uds.
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                       <div
                         className={cn(
-                          'inline-flex items-center rounded-lg border border-border/80 bg-background/90 p-0.5',
+                          'inline-flex shrink-0 items-center rounded-lg border border-border/80 bg-background/90 p-0.5',
                           'ring-1 ring-white/[0.05]'
                         )}
                       >
@@ -243,13 +276,13 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
                           disabled={safeQty <= 1}
                           onClick={() => setQty((q) => Math.max(1, q - 1))}
                           className={cn(
-                            'flex size-8 items-center justify-center rounded-md text-foreground transition',
+                            'flex size-9 items-center justify-center rounded-md text-foreground transition sm:size-8',
                             'hover:bg-muted disabled:pointer-events-none disabled:opacity-40'
                           )}
                         >
-                          <Minus className="size-3.5" aria-hidden />
+                          <Minus className="size-4 sm:size-3.5" aria-hidden />
                         </button>
-                        <span className="min-w-[2rem] text-center text-sm font-semibold tabular-nums">
+                        <span className="min-w-[2.25rem] text-center text-sm font-semibold tabular-nums">
                           {safeQty}
                         </span>
                         <button
@@ -260,64 +293,97 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
                             setQty((q) => Math.min(maxQty, q + 1))
                           }
                           className={cn(
-                            'flex size-8 items-center justify-center rounded-md text-foreground transition',
+                            'flex size-9 items-center justify-center rounded-md text-foreground transition sm:size-8',
                             'hover:bg-muted disabled:pointer-events-none disabled:opacity-40'
                           )}
                         >
-                          <Plus className="size-3.5" aria-hidden />
+                          <Plus className="size-4 sm:size-3.5" aria-hidden />
                         </button>
                       </div>
                     </div>
-                    <div className="mt-2 flex flex-wrap items-end justify-between gap-2 border-t border-border/40 pt-2">
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <p className="text-[0.7rem] text-muted-foreground">
-                          Precio unitario{' '}
-                          <span className="font-medium text-foreground">
-                            {formatMxn(unitPrice)}
-                          </span>
-                          <span className="text-border/80"> · </span>
-                          {safeQty} uds.
-                        </p>
-                        <p className="font-heading text-xl font-bold tabular-nums leading-none text-foreground sm:text-2xl">
-                          {formatMxn(lineTotal)}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addTire(tire, safeQty, tireImageSrc)
-                          }}
-                          className={cn(
-                            buttonVariants({ size: 'sm' }),
-                            'border border-carsa-primary/40 bg-carsa-primary/10 px-2.5 text-foreground',
-                            'hover:bg-carsa-primary/20'
-                          )}
-                        >
-                          Agregar al carrito
-                        </button>
+
+                    <div className="mt-3 border-t border-border/40 pt-3">
+                      <p className="text-[0.7rem] text-muted-foreground">
+                        Precio unitario{' '}
+                        <span className="font-medium text-foreground">
+                          {formatMxn(unitPrice)}
+                        </span>
+                        <span className="text-border/80"> · </span>
+                        {safeQty} uds.
+                      </p>
+                      <p className="mt-1 font-heading text-2xl font-bold tabular-nums leading-none text-foreground">
+                        {formatMxn(lineTotal)}
+                      </p>
+                    </div>
+
+                    {adminNotice ? (
+                      <div
+                        role="alert"
+                        className="mt-3 w-full rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-xs leading-snug text-amber-100"
+                      >
+                        <p>{adminNotice}</p>
                         <Link
-                          href="/carrito"
-                          className={cn(
-                            buttonVariants({ variant: 'outline', size: 'sm' }),
-                            'px-2.5 text-center'
-                          )}
+                          href="/admin"
+                          className="mt-2 inline-flex font-medium text-carsa-primary underline"
                         >
-                          Ver carrito
+                          Ir al panel
                         </Link>
                       </div>
+                    ) : null}
+
+                    <div className="mt-3 flex w-full flex-col gap-2.5 border-t border-border/40 pt-3">
+                      {tireWhatsApp ? (
+                        <a
+                          href={tireWhatsApp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            buttonVariants({ variant: 'outline', size: 'default' }),
+                            'h-auto min-h-10 w-full justify-center gap-2 whitespace-normal border-border/70 px-3 py-2.5 text-center text-sm leading-snug'
+                          )}
+                        >
+                          <MessageCircle className="size-4 shrink-0 opacity-90" aria-hidden />
+                          Consultar por WhatsApp
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={authLoading}
+                        onClick={() => {
+                          tryAddToCart(
+                            {
+                              item_type: 'tire',
+                              item_id: tire.id,
+                              item_name: tire.name,
+                              image_url: tireImageSrc.trim()
+                                ? tireImageSrc
+                                : null,
+                              unit_price: unitPrice,
+                              quantity: safeQty,
+                              available_quantity: maxQty,
+                            },
+                            () => setOpen(false)
+                          )
+                        }}
+                        className={cn(
+                          buttonVariants({ size: 'default' }),
+                          'h-auto min-h-10 w-full justify-center border border-carsa-primary/45 bg-carsa-primary px-3 py-2.5 text-sm font-semibold text-white',
+                          'hover:bg-carsa-primary-hover disabled:pointer-events-none disabled:opacity-50'
+                        )}
+                      >
+                        Agregar al carrito
+                      </button>
+                      <Link
+                        href="/carrito"
+                        className={cn(
+                          buttonVariants({ variant: 'outline', size: 'default' }),
+                          'h-auto min-h-10 w-full justify-center gap-2 border-border/70 bg-background/90 px-3 py-2.5 text-center text-sm hover:bg-muted/50'
+                        )}
+                      >
+                        <ShoppingBag className="size-4 shrink-0 opacity-90" aria-hidden />
+                        Ver carrito
+                      </Link>
                     </div>
-                    <p className="mt-1.5 text-[0.65rem] text-muted-foreground">
-                      {tire.stock <= 0 ? (
-                        <span className="text-destructive">Sin existencias</span>
-                      ) : lowStock ? (
-                        <span className="text-amber-400">
-                          Máx. {maxQty} en stock
-                        </span>
-                      ) : (
-                        <>Stock: {tire.stock}</>
-                      )}
-                    </p>
                   </div>
                 </div>
               ) : (
@@ -336,7 +402,8 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
 export function BatteryCard({ battery }: { battery: CatalogBattery }) {
   const [open, setOpen] = useState(false)
   const [qty, setQty] = useState(1)
-  const { addBattery } = useCart()
+  const { tryAddToCart, adminNotice, dismissAdminNotice, authLoading } =
+    useCatalogCartAdd()
   const brand = joinBrandName(battery.battery_brands)
   const lowStock = battery.stock > 0 && battery.stock < 4
   const warrantyLabel =
@@ -350,7 +417,14 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
     maxQty > 0 ? Math.min(Math.max(1, qty), maxQty) : 1
   const lineTotal = unitPrice * (maxQty > 0 ? safeQty : 0)
 
+  const batteryWhatsApp = buildWhatsAppUrl(
+    `Hola CARSA, me interesa cotizar la batería ${battery.name}${
+      brand ? ` (${brand})` : ''
+    }.`
+  )
+
   const handleDialogOpenChange = (next: boolean) => {
+    if (!next) dismissAdminNotice()
     if (next) setQty(1)
     setOpen(next)
   }
@@ -518,14 +592,37 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
 
               {maxQty > 0 ? (
                 <div className="mt-auto shrink-0 space-y-2 border-t border-border/50 pt-2">
-                  <div className="rounded-lg border border-border/60 bg-muted/10 p-2.5 ring-1 ring-white/[0.03] sm:p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                        Cantidad
-                      </p>
+                  <div className="rounded-lg border border-border/60 bg-muted/10 p-3 ring-1 ring-white/[0.03] sm:p-3.5">
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          Cantidad
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {battery.stock <= 0 ? (
+                            <span className="text-xs font-medium text-destructive">
+                              Sin existencias
+                            </span>
+                          ) : lowStock ? (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-500/45 bg-amber-500/10 px-2 py-0.5 text-[0.7rem] font-medium text-amber-100"
+                            >
+                              Pocas: {maxQty} disp.
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[0.7rem] font-medium tabular-nums text-emerald-100"
+                            >
+                              En stock · {maxQty} uds.
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                       <div
                         className={cn(
-                          'inline-flex items-center rounded-lg border border-border/80 bg-background/90 p-0.5',
+                          'inline-flex shrink-0 items-center rounded-lg border border-border/80 bg-background/90 p-0.5',
                           'ring-1 ring-white/[0.05]'
                         )}
                       >
@@ -535,13 +632,13 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
                           disabled={safeQty <= 1}
                           onClick={() => setQty((q) => Math.max(1, q - 1))}
                           className={cn(
-                            'flex size-8 items-center justify-center rounded-md text-foreground transition',
+                            'flex size-9 items-center justify-center rounded-md text-foreground transition sm:size-8',
                             'hover:bg-muted disabled:pointer-events-none disabled:opacity-40'
                           )}
                         >
-                          <Minus className="size-3.5" aria-hidden />
+                          <Minus className="size-4 sm:size-3.5" aria-hidden />
                         </button>
-                        <span className="min-w-[2rem] text-center text-sm font-semibold tabular-nums">
+                        <span className="min-w-[2.25rem] text-center text-sm font-semibold tabular-nums">
                           {safeQty}
                         </span>
                         <button
@@ -552,64 +649,97 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
                             setQty((q) => Math.min(maxQty, q + 1))
                           }
                           className={cn(
-                            'flex size-8 items-center justify-center rounded-md text-foreground transition',
+                            'flex size-9 items-center justify-center rounded-md text-foreground transition sm:size-8',
                             'hover:bg-muted disabled:pointer-events-none disabled:opacity-40'
                           )}
                         >
-                          <Plus className="size-3.5" aria-hidden />
+                          <Plus className="size-4 sm:size-3.5" aria-hidden />
                         </button>
                       </div>
                     </div>
-                    <div className="mt-2 flex flex-wrap items-end justify-between gap-2 border-t border-border/40 pt-2">
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <p className="text-[0.7rem] text-muted-foreground">
-                          Precio unitario{' '}
-                          <span className="font-medium text-foreground">
-                            {formatMxn(unitPrice)}
-                          </span>
-                          <span className="text-border/80"> · </span>
-                          {safeQty} uds.
-                        </p>
-                        <p className="font-heading text-xl font-bold tabular-nums leading-none text-foreground sm:text-2xl">
-                          {formatMxn(lineTotal)}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            addBattery(battery, safeQty, batteryImageSrc)
-                          }}
-                          className={cn(
-                            buttonVariants({ size: 'sm' }),
-                            'border border-carsa-primary/40 bg-carsa-primary/10 px-2.5 text-foreground',
-                            'hover:bg-carsa-primary/20'
-                          )}
-                        >
-                          Agregar al carrito
-                        </button>
+
+                    <div className="mt-3 border-t border-border/40 pt-3">
+                      <p className="text-[0.7rem] text-muted-foreground">
+                        Precio unitario{' '}
+                        <span className="font-medium text-foreground">
+                          {formatMxn(unitPrice)}
+                        </span>
+                        <span className="text-border/80"> · </span>
+                        {safeQty} uds.
+                      </p>
+                      <p className="mt-1 font-heading text-2xl font-bold tabular-nums leading-none text-foreground">
+                        {formatMxn(lineTotal)}
+                      </p>
+                    </div>
+
+                    {adminNotice ? (
+                      <div
+                        role="alert"
+                        className="mt-3 w-full rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-xs leading-snug text-amber-100"
+                      >
+                        <p>{adminNotice}</p>
                         <Link
-                          href="/carrito"
-                          className={cn(
-                            buttonVariants({ variant: 'outline', size: 'sm' }),
-                            'px-2.5 text-center'
-                          )}
+                          href="/admin"
+                          className="mt-2 inline-flex font-medium text-carsa-primary underline"
                         >
-                          Ver carrito
+                          Ir al panel
                         </Link>
                       </div>
+                    ) : null}
+
+                    <div className="mt-3 flex w-full flex-col gap-2.5 border-t border-border/40 pt-3">
+                      {batteryWhatsApp ? (
+                        <a
+                          href={batteryWhatsApp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            buttonVariants({ variant: 'outline', size: 'default' }),
+                            'h-auto min-h-10 w-full justify-center gap-2 whitespace-normal border-border/70 px-3 py-2.5 text-center text-sm leading-snug'
+                          )}
+                        >
+                          <MessageCircle className="size-4 shrink-0 opacity-90" aria-hidden />
+                          Consultar por WhatsApp
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={authLoading}
+                        onClick={() => {
+                          tryAddToCart(
+                            {
+                              item_type: 'battery',
+                              item_id: battery.id,
+                              item_name: battery.name,
+                              image_url: batteryImageSrc.trim()
+                                ? batteryImageSrc
+                                : null,
+                              unit_price: unitPrice,
+                              quantity: safeQty,
+                              available_quantity: maxQty,
+                            },
+                            () => setOpen(false)
+                          )
+                        }}
+                        className={cn(
+                          buttonVariants({ size: 'default' }),
+                          'h-auto min-h-10 w-full justify-center border border-carsa-primary/45 bg-carsa-primary px-3 py-2.5 text-sm font-semibold text-white',
+                          'hover:bg-carsa-primary-hover disabled:pointer-events-none disabled:opacity-50'
+                        )}
+                      >
+                        Agregar al carrito
+                      </button>
+                      <Link
+                        href="/carrito"
+                        className={cn(
+                          buttonVariants({ variant: 'outline', size: 'default' }),
+                          'h-auto min-h-10 w-full justify-center gap-2 border-border/70 bg-background/90 px-3 py-2.5 text-center text-sm hover:bg-muted/50'
+                        )}
+                      >
+                        <ShoppingBag className="size-4 shrink-0 opacity-90" aria-hidden />
+                        Ver carrito
+                      </Link>
                     </div>
-                    <p className="mt-1.5 text-[0.65rem] text-muted-foreground">
-                      {battery.stock <= 0 ? (
-                        <span className="text-destructive">Sin existencias</span>
-                      ) : lowStock ? (
-                        <span className="text-amber-400">
-                          Máx. {maxQty} en stock
-                        </span>
-                      ) : (
-                        <>Stock: {battery.stock}</>
-                      )}
-                    </p>
                   </div>
                 </div>
               ) : (

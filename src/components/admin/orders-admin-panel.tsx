@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Eye } from 'lucide-react'
 
-import { AdminFeedbackBanner } from '@/components/admin/admin-feedback-banner'
+import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,6 +32,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
+import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 
 type OrderStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
@@ -115,6 +116,8 @@ export function OrdersAdminPanel() {
     variant: 'success' | 'error'
     text: string
   } | null>(null)
+
+  const dismissFeedback = useCallback(() => setFeedback(null), [])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null)
@@ -154,6 +157,8 @@ export function OrdersAdminPanel() {
       void load()
     })
   }, [load])
+
+  useSupabaseTableDebouncedRefresh('orders', load)
 
   const filteredOrders = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -249,9 +254,12 @@ export function OrdersAdminPanel() {
         </div>
       </div>
 
-      {feedback ? (
-        <AdminFeedbackBanner variant={feedback.variant} message={feedback.text} />
-      ) : null}
+      <AdminFloatingToast
+        open={Boolean(feedback?.text)}
+        variant={feedback?.variant ?? 'success'}
+        message={feedback?.text ?? ''}
+        onDismiss={dismissFeedback}
+      />
 
       <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 sm:grid-cols-[1fr_220px]">
         <div className="space-y-2">
@@ -288,7 +296,7 @@ export function OrdersAdminPanel() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+      <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <TireLoadingIcon className="size-8" aria-label="Cargando pedidos" />

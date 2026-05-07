@@ -39,6 +39,10 @@ import {
   PRODUCTO_LLANTA_IMG,
 } from '@/lib/public-catalog-images'
 import { mergeAlignmentBalanceServices } from '@/lib/catalog-services-display'
+import {
+  useBatteriesInventoryRealtime,
+  useTiresInventoryRealtime,
+} from '@/hooks/use-catalog-inventory-realtime'
 import { cn } from '@/lib/utils'
 import { buildWhatsAppUrl } from '@/lib/whatsapp-public'
 import type { CatalogPageProps } from '@/types/catalog'
@@ -122,7 +126,7 @@ function SectionShell({
   children: ReactNode
 }) {
   return (
-    <section id={id} className="scroll-mt-24">
+    <section id={id} className="scroll-mt-28 sm:scroll-mt-32">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -154,14 +158,16 @@ export function PublicCatalogView({
 }: CatalogPageProps) {
   const router = useRouter()
   const [query, setQuery] = useState('')
+  const liveTires = useTiresInventoryRealtime(tires)
+  const liveBatteries = useBatteriesInventoryRealtime(batteries)
 
   const featuredTires = useMemo(
-    () => tires.filter((t) => t.is_featured),
-    [tires]
+    () => liveTires.filter((t) => t.is_featured),
+    [liveTires]
   )
   const featuredBatteries = useMemo(
-    () => batteries.filter((b) => b.is_featured),
-    [batteries]
+    () => liveBatteries.filter((b) => b.is_featured),
+    [liveBatteries]
   )
   const filteredFeaturedTires = useMemo(
     () => featuredTires.filter((t) => tireMatchesQuery(query, t)),
@@ -194,7 +200,7 @@ export function PublicCatalogView({
     <div className="flex flex-col">
       <section
         id="inicio"
-        className="relative overflow-hidden border-b border-border/60"
+        className="relative min-h-[min(68vh,38rem)] scroll-mt-28 overflow-hidden border-b border-border/60 sm:min-h-0 sm:scroll-mt-32"
       >
         <Image
           src="/Imagen/CARSARportada.png"
@@ -214,7 +220,7 @@ export function PublicCatalogView({
           aria-hidden
         />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:pt-20">
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pb-16 pt-12 pr-[max(1rem,env(safe-area-inset-right))] sm:px-[max(1.5rem,env(safe-area-inset-left))] sm:pb-20 sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pt-16 lg:pt-20">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -248,7 +254,7 @@ export function PublicCatalogView({
                   transition: { duration: 0.5, ease: easeOut },
                 },
               }}
-              className="mt-4 font-heading text-4xl font-bold leading-[1.06] tracking-tight text-foreground sm:text-5xl lg:text-[3.35rem]"
+              className="mt-4 font-heading text-3xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-5xl sm:leading-[1.06] lg:text-[3.35rem]"
             >
               Tu llanta o batería a un clic.
             </motion.h1>
@@ -302,7 +308,7 @@ export function PublicCatalogView({
                   type="submit"
                   className={cn(
                     buttonVariants({ size: 'lg' }),
-                    'h-11 shrink-0 gap-2 rounded-xl bg-carsa-primary px-6 text-white shadow-md shadow-carsa-primary/25 hover:bg-carsa-primary-hover sm:rounded-xl'
+                    'h-11 w-full shrink-0 gap-2 rounded-xl bg-carsa-primary px-6 text-white shadow-md shadow-carsa-primary/25 hover:bg-carsa-primary-hover sm:w-auto sm:rounded-xl'
                   )}
                 >
                   Buscar
@@ -320,13 +326,13 @@ export function PublicCatalogView({
                   transition: { duration: 0.5, ease: easeOut },
                 },
               }}
-              className="mt-6 flex flex-wrap gap-3"
+              className="mt-6 flex w-full max-w-2xl flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3"
             >
               <Link
                 href="/llantas"
                 className={cn(
                   buttonVariants({ size: 'lg' }),
-                  'inline-flex h-11 items-center justify-center border-0 bg-carsa-canvas px-6 font-semibold text-carsa-secondary shadow-sm hover:bg-carsa-canvas/90'
+                  'inline-flex h-11 w-full items-center justify-center border-0 bg-carsa-canvas px-6 font-semibold text-carsa-secondary shadow-sm hover:bg-carsa-canvas/90 sm:w-auto'
                 )}
               >
                 Ver catálogo completo
@@ -341,7 +347,7 @@ export function PublicCatalogView({
                 }
                 className={cn(
                   buttonVariants({ variant: 'outline', size: 'lg' }),
-                  'h-11 border-border bg-transparent px-6 text-foreground hover:border-carsa-primary/50 hover:bg-carsa-primary/10'
+                  'h-11 w-full border-border bg-transparent px-6 text-foreground hover:border-carsa-primary/50 hover:bg-carsa-primary/10 sm:w-auto'
                 )}
               >
                 No encuentro mi medida
@@ -352,7 +358,7 @@ export function PublicCatalogView({
       </section>
 
       <div className="border-y border-border/60 bg-background/90 ring-1 ring-white/[0.04]">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-3 sm:gap-8 sm:px-6">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-[max(1rem,env(safe-area-inset-left))] py-12 pr-[max(1rem,env(safe-area-inset-right))] sm:grid-cols-2 sm:gap-8 sm:px-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] lg:grid-cols-3">
           {[
             {
               icon: Headphones,
@@ -393,7 +399,7 @@ export function PublicCatalogView({
       </div>
 
       <div className="border-b border-border/60 bg-background py-14 sm:py-16">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:grid-cols-2 sm:gap-10 lg:gap-12 sm:px-6">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:grid-cols-2 sm:gap-10 sm:px-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] lg:gap-12">
           <CategoryShowcaseCard
             href="/llantas"
             title="Llantas"
@@ -413,7 +419,7 @@ export function PublicCatalogView({
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-20 px-4 py-16 sm:px-6 sm:py-20">
+      <div className="mx-auto flex max-w-6xl flex-col gap-16 px-[max(1rem,env(safe-area-inset-left))] py-14 pr-[max(1rem,env(safe-area-inset-right))] sm:gap-20 sm:px-[max(1.5rem,env(safe-area-inset-left))] sm:py-20 sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         {q ? (
           <div className="-mb-12 flex flex-wrap items-center gap-2 text-sm">
             <span className="rounded-full border border-border bg-muted/40 px-3 py-1 text-muted-foreground">
@@ -436,7 +442,7 @@ export function PublicCatalogView({
           title="Llantas destacadas"
           description="Selección de llantas marcadas como destacadas en el catálogo. El inventario completo está en la página de llantas."
         >
-          {tires.length === 0 ? (
+          {liveTires.length === 0 ? (
             <EmptyBlock label="llantas activas" />
           ) : featuredTires.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
@@ -467,7 +473,7 @@ export function PublicCatalogView({
           title="Baterías destacadas"
           description="Selección de baterías marcadas como destacadas en el catálogo. El inventario completo está en la página de baterías."
         >
-          {batteries.length === 0 ? (
+          {liveBatteries.length === 0 ? (
             <EmptyBlock label="baterías activas" />
           ) : featuredBatteries.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
@@ -512,14 +518,14 @@ export function PublicCatalogView({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: easeOut }}
-          className="rounded-2xl border border-carsa-primary/25 bg-gradient-to-br from-carsa-primary/12 via-transparent to-carsa-surface/90 p-8 sm:p-10"
+          className="rounded-2xl border border-carsa-primary/25 bg-gradient-to-br from-carsa-primary/12 via-transparent to-carsa-surface/90 p-6 sm:p-10"
         >
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="font-heading text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div className="min-w-0">
+              <h3 className="font-heading text-lg font-semibold tracking-tight text-foreground sm:text-2xl">
                 ¿Listo para cotizar o agendar?
               </h3>
-              <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Envíanos rin y medida, o la llave de tu batería actual, y te
                 respondemos con opciones claras.
               </p>
@@ -530,7 +536,7 @@ export function PublicCatalogView({
               rel={workshopWhatsApp ? 'noopener noreferrer' : undefined}
               className={cn(
                 buttonVariants({ size: 'lg' }),
-                'h-11 shrink-0 bg-carsa-primary px-6 text-white shadow-md shadow-carsa-primary/25 hover:bg-carsa-primary-hover'
+                'h-11 w-full shrink-0 justify-center bg-carsa-primary px-6 text-white shadow-md shadow-carsa-primary/25 hover:bg-carsa-primary-hover sm:w-auto'
               )}
             >
               Escribir por WhatsApp

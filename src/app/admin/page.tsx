@@ -56,7 +56,7 @@ function StatCard({
         </span>
       </CardHeader>
       <CardContent className="relative">
-        <p className="font-heading text-3xl font-bold tabular-nums tracking-tight text-foreground">
+        <p className="font-heading text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
           {value}
         </p>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>
@@ -150,7 +150,7 @@ export default async function AdminDashboardPage() {
             <p className="mt-5 text-sm text-foreground/75">
               Suma de todas las ventas registradas en el sistema.
             </p>
-            <p className="mt-3 font-heading text-4xl font-bold tabular-nums tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]">
+            <p className="mt-3 break-words font-heading text-3xl font-bold tabular-nums tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]">
               {revenueDisplay}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -164,7 +164,7 @@ export default async function AdminDashboardPage() {
                 <TrendingUp className="size-3.5 text-emerald-400/90" aria-hidden />
                 Este mes
               </div>
-              <p className="mt-2 font-heading text-2xl font-bold tabular-nums text-foreground sm:text-3xl">
+              <p className="mt-2 break-words font-heading text-xl font-bold tabular-nums text-foreground sm:text-3xl">
                 {revenueMonthDisplay}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">

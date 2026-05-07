@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ImageIcon, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 
-import { AdminFeedbackBanner } from '@/components/admin/admin-feedback-banner'
+import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -36,7 +36,9 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
+import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
 import { batterySchema, type BatteryFormValues } from '@/lib/admin/schemas'
+import { publishCatalogInventoryBroadcast } from '@/lib/catalog-inventory-broadcast'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { uploadProductImage } from '@/lib/supabase/storage-product-image'
 import type { AdminBattery, AdminBatteryBrand } from '@/types/admin'
@@ -79,6 +81,7 @@ export function BatteriesAdminPanel() {
     variant: 'success' | 'error'
     text: string
   } | null>(null)
+  const dismissFeedback = useCallback(() => setFeedback(null), [])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AdminBattery | null>(null)
@@ -176,6 +179,8 @@ export function BatteriesAdminPanel() {
       void load()
     })
   }, [load])
+
+  useSupabaseTableDebouncedRefresh('batteries', load)
 
   const closeDialog = () => {
     setDialogOpen(false)
@@ -300,13 +305,30 @@ export function BatteriesAdminPanel() {
           .update({ ...payload, image_url: nextImageUrl })
           .eq('id', editing.id)
         if (error) throw error
+        publishCatalogInventoryBroadcast({
+          table: 'batteries',
+          id: editing.id,
+          stock: payload.stock,
+          price: payload.price,
+          is_active: payload.is_active,
+        })
       } else {
-        const { error } = await supabase
+        const { data: created, error } = await supabase
           .from('batteries')
           .insert({ ...payload, image_url: nextImageUrl })
           .select('id')
           .single()
         if (error) throw error
+        const newId = String(created?.id ?? '')
+        if (newId) {
+          publishCatalogInventoryBroadcast({
+            table: 'batteries',
+            id: newId,
+            stock: payload.stock,
+            price: payload.price,
+            is_active: payload.is_active,
+          })
+        }
       }
 
       setFeedback({
@@ -349,6 +371,11 @@ export function BatteriesAdminPanel() {
         text: 'No se pudo eliminar la batería. Inténtalo nuevamente.',
       })
     } else {
+      publishCatalogInventoryBroadcast({
+        table: 'batteries',
+        id: deleteTarget.id,
+        deleted: true,
+      })
       setFeedback({ variant: 'success', text: 'Batería eliminada.' })
       setDeleteTarget(null)
       void load()
@@ -385,11 +412,14 @@ export function BatteriesAdminPanel() {
         </p>
       ) : null}
 
-      {feedback ? (
-        <AdminFeedbackBanner variant={feedback.variant} message={feedback.text} />
-      ) : null}
+      <AdminFloatingToast
+        open={Boolean(feedback?.text)}
+        variant={feedback?.variant ?? 'success'}
+        message={feedback?.text ?? ''}
+        onDismiss={dismissFeedback}
+      />
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+      <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <TireLoadingIcon className="size-8" aria-label="Cargando baterías" />

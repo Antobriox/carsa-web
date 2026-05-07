@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ImageIcon, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 
-import { AdminFeedbackBanner } from '@/components/admin/admin-feedback-banner'
+import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -36,7 +36,9 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
+import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
 import { tireSchema, type TireFormValues } from '@/lib/admin/schemas'
+import { publishCatalogInventoryBroadcast } from '@/lib/catalog-inventory-broadcast'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { uploadProductImage } from '@/lib/supabase/storage-product-image'
 import type { AdminTire, AdminTireBrand } from '@/types/admin'
@@ -79,6 +81,7 @@ export function TiresAdminPanel() {
     variant: 'success' | 'error'
     text: string
   } | null>(null)
+  const dismissFeedback = useCallback(() => setFeedback(null), [])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AdminTire | null>(null)
@@ -171,6 +174,8 @@ export function TiresAdminPanel() {
       void load()
     })
   }, [load])
+
+  useSupabaseTableDebouncedRefresh('tires', load)
 
   const closeDialog = () => {
     setDialogOpen(false)
@@ -284,13 +289,30 @@ export function TiresAdminPanel() {
           .update({ ...payload, image_url: nextImageUrl })
           .eq('id', editing.id)
         if (error) throw error
+        publishCatalogInventoryBroadcast({
+          table: 'tires',
+          id: editing.id,
+          stock: payload.stock,
+          price: payload.price,
+          is_active: payload.is_active,
+        })
       } else {
-        const { error } = await supabase
+        const { data: created, error } = await supabase
           .from('tires')
           .insert({ ...payload, image_url: nextImageUrl })
           .select('id')
           .single()
         if (error) throw error
+        const newId = String(created?.id ?? '')
+        if (newId) {
+          publishCatalogInventoryBroadcast({
+            table: 'tires',
+            id: newId,
+            stock: payload.stock,
+            price: payload.price,
+            is_active: payload.is_active,
+          })
+        }
       }
 
       setFeedback({
@@ -330,6 +352,11 @@ export function TiresAdminPanel() {
     if (error) {
       setFeedback({ variant: 'error', text: error.message })
     } else {
+      publishCatalogInventoryBroadcast({
+        table: 'tires',
+        id: deleteTarget.id,
+        deleted: true,
+      })
       setFeedback({ variant: 'success', text: 'Llanta eliminada.' })
       setDeleteTarget(null)
       void load()
@@ -366,11 +393,14 @@ export function TiresAdminPanel() {
         </p>
       ) : null}
 
-      {feedback ? (
-        <AdminFeedbackBanner variant={feedback.variant} message={feedback.text} />
-      ) : null}
+      <AdminFloatingToast
+        open={Boolean(feedback?.text)}
+        variant={feedback?.variant ?? 'success'}
+        message={feedback?.text ?? ''}
+        onDismiss={dismissFeedback}
+      />
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+      <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <TireLoadingIcon className="size-8" aria-label="Cargando llantas" />

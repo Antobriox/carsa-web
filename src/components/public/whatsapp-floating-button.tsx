@@ -22,7 +22,7 @@ export function WhatsAppFloatingButton() {
   const external = href.startsWith('http')
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 sm:bottom-8 sm:right-8">
+    <div className="fixed z-50 bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))] sm:bottom-8 sm:right-8">
       <a
         href={href}
         target={external ? '_blank' : undefined}

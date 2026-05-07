@@ -10,7 +10,7 @@ export const metadata = {
 export default async function CuentaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ admin?: string }>
+  searchParams: Promise<{ admin?: string; pedido?: string }>
 }) {
   const session = await getSessionWithProfile()
   const sp = await searchParams
@@ -28,6 +28,7 @@ export default async function CuentaPage({
       profile={session.profile}
       email={session.email}
       adminAccessDenied={sp.admin === 'forbidden'}
+      orderJustPlaced={sp.pedido === 'enviado'}
     />
   )
 }

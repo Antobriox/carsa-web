@@ -114,7 +114,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-md md:hidden">
+        <header className="sticky top-0 z-40 flex min-h-14 items-center gap-3 border-b border-border/60 bg-background/90 px-[max(1rem,env(safe-area-inset-left))] pt-[env(safe-area-inset-top)] pr-[max(1rem,env(safe-area-inset-right))] backdrop-blur-md md:hidden">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger
               render={
@@ -163,7 +163,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <header className="hidden h-14 items-center border-b border-border/60 bg-card/25 px-6 backdrop-blur-sm md:flex">
+        <header className="hidden h-14 items-center border-b border-border/60 bg-card/25 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] backdrop-blur-sm md:flex">
           <div className="min-w-0">
             <p className="text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
               Panel administrador
@@ -174,8 +174,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="relative flex-1 overflow-auto bg-gradient-to-b from-transparent via-carsa-primary/[0.02] to-transparent p-4 md:p-6">
-          <div className="mx-auto max-w-7xl">{children}</div>
+        <main className="relative min-w-0 flex-1 overflow-x-auto overflow-y-auto bg-gradient-to-b from-transparent via-carsa-primary/[0.02] to-transparent p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 md:p-6 md:pb-6">
+          <div className="mx-auto w-full min-w-0 max-w-7xl">{children}</div>
         </main>
       </div>
     </div>

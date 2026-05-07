@@ -26,7 +26,7 @@ export function SiteFooter() {
       id="contacto"
       className="border-t border-carsa-tertiary/25 bg-carsa-secondary py-14 text-sm"
     >
-      <div className="mx-auto max-w-6xl space-y-12 px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl space-y-12 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div className="space-y-4">
             <p className="font-heading text-lg font-bold tracking-tight text-carsa-primary">

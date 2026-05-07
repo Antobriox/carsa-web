@@ -149,6 +149,18 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans scroll-smooth;
+    @apply min-w-0 scroll-smooth font-sans;
+    overflow-x: clip;
+  }
+}
+
+/* Oculta la barra visual pero mantiene scroll (rueda / trackpad / teclado). */
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }

@@ -58,7 +58,7 @@ export default async function Home() {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground">
         <SiteHeader />
-        <main className="flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
+        <main className="flex min-w-0 flex-1 items-center justify-center py-16 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
           <Card className="max-w-lg border-destructive/30 bg-card/90">
             <CardHeader>
               <div className="flex items-center gap-2 text-destructive">
@@ -97,7 +97,7 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SiteHeader />
-      <main className="flex-1">
+      <main className="min-w-0 flex-1">
         <PublicCatalogView {...catalog} />
       </main>
       <SiteFooter />

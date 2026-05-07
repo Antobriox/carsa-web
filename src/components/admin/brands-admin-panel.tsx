@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useForm, type Resolver } from 'react-hook-form'
 
-import { AdminFeedbackBanner } from '@/components/admin/admin-feedback-banner'
+import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { Button } from '@/components/ui/button'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
 import {
@@ -54,6 +54,7 @@ export function BrandsAdminPanel() {
     variant: 'success' | 'error'
     text: string
   } | null>(null)
+  const dismissFeedback = useCallback(() => setFeedback(null), [])
 
   const [tireDialogOpen, setTireDialogOpen] = useState(false)
   const [batteryDialogOpen, setBatteryDialogOpen] = useState(false)
@@ -292,9 +293,12 @@ export function BrandsAdminPanel() {
         </p>
       </div>
 
-      {feedback ? (
-        <AdminFeedbackBanner variant={feedback.variant} message={feedback.text} />
-      ) : null}
+      <AdminFloatingToast
+        open={Boolean(feedback?.text)}
+        variant={feedback?.variant ?? 'success'}
+        message={feedback?.text ?? ''}
+        onDismiss={dismissFeedback}
+      />
 
       <Tabs defaultValue="tires" className="gap-4">
         <TabsList variant="line" className="w-full max-w-md">
@@ -314,7 +318,7 @@ export function BrandsAdminPanel() {
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+          <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
             {loading ? (
               <div className="flex items-center justify-center py-16 text-muted-foreground">
                 <TireLoadingIcon className="size-8" aria-label="Cargando marcas de llantas" />
@@ -381,7 +385,7 @@ export function BrandsAdminPanel() {
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+          <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
             {loading ? (
               <div className="flex items-center justify-center py-16 text-muted-foreground">
                 <TireLoadingIcon className="size-8" aria-label="Cargando marcas de baterías" />

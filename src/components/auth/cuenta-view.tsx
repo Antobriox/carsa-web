@@ -16,10 +16,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useAuth } from '@/context/auth-context'
-import { useCart } from '@/context/cart-context'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import type { Profile } from '@/types/auth'
 import { cn } from '@/lib/utils'
+import { useCartStore } from '@/stores/cart-store'
 
 const easeOut = [0.22, 1, 0.36, 1] as const
 
@@ -27,15 +27,17 @@ export function CuentaView({
   profile,
   email,
   adminAccessDenied = false,
+  orderJustPlaced = false,
 }: {
   profile: Profile
   email: string
   /** True si intentó entrar a /admin sin ser administrador. */
   adminAccessDenied?: boolean
+  /** True si llegó tras confirmar un pedido desde el carrito. */
+  orderJustPlaced?: boolean
 }) {
   const router = useRouter()
   const { clearClientSession } = useAuth()
-  const { clear: clearCart } = useCart()
   const supabase = useMemo(() => createSupabaseBrowser(), [])
   const signOutOnceRef = useRef(false)
 
@@ -58,7 +60,7 @@ export function CuentaView({
       }
 
       clearClientSession()
-      clearCart()
+      useCartStore.getState().clearCart()
       router.replace('/')
       router.refresh()
     } catch (error) {
@@ -67,7 +69,7 @@ export function CuentaView({
         'Ocurrió un error al cerrar sesión. Se actualizará la página.'
       )
       clearClientSession()
-      clearCart()
+      useCartStore.getState().clearCart()
       router.replace('/')
       router.refresh()
     } finally {
@@ -81,6 +83,15 @@ export function CuentaView({
   return (
     <AuthPageShell className="max-w-lg">
       <div className="space-y-6">
+        {orderJustPlaced ? (
+          <div
+            role="status"
+            className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100"
+          >
+            Pedido enviado correctamente. CARSA se pondrá en contacto contigo para
+            confirmar disponibilidad.
+          </div>
+        ) : null}
         {adminAccessDenied ? (
           <div
             role="alert"

@@ -15,8 +15,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { useAuth } from '@/context/auth-context'
-import { useCart } from '@/context/cart-context'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { useCartStore } from '@/stores/cart-store'
 import { cn } from '@/lib/utils'
 
 const nav = [
@@ -37,7 +37,9 @@ function AuthSkeleton() {
 
 export function SiteHeader() {
   const router = useRouter()
-  const { itemCount, clear: clearCart } = useCart()
+  const itemCount = useCartStore((s) =>
+    s.items.reduce((acc, i) => acc + i.quantity, 0)
+  )
   const { user, profile, loading, clearClientSession } = useAuth()
   const supabase = useMemo(() => createSupabaseBrowser(), [])
   const signOutOnceRef = useRef(false)
@@ -66,7 +68,7 @@ export function SiteHeader() {
       }
 
       clearClientSession()
-      clearCart()
+      useCartStore.getState().clearCart()
       closeMobile()
       router.replace('/')
       router.refresh()
@@ -76,7 +78,7 @@ export function SiteHeader() {
         'Ocurrió un error al cerrar sesión. Se actualizará la página.'
       )
       clearClientSession()
-      clearCart()
+      useCartStore.getState().clearCart()
       closeMobile()
       router.replace('/')
       router.refresh()
@@ -238,7 +240,7 @@ export function SiteHeader() {
   )
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
       {signOutError ? (
         <div
           role="alert"
@@ -247,7 +249,7 @@ export function SiteHeader() {
           {signOutError}
         </div>
       ) : null}
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-6">
+      <div className="mx-auto flex min-h-14 max-w-6xl items-center justify-between gap-2 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:min-h-16 sm:gap-4 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger

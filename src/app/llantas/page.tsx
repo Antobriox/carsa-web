@@ -37,7 +37,7 @@ export default async function LlantasPage({
   if (error) {
     return (
       <CatalogPageShell>
-        <div className="mx-auto flex max-w-6xl flex-col items-center px-4 py-16 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center py-16 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
           <Card className="max-w-lg border-destructive/30 bg-card/90">
             <CardHeader>
               <div className="flex items-center gap-2 text-destructive">
@@ -57,7 +57,7 @@ export default async function LlantasPage({
   return (
     <CatalogPageShell>
       <div className="border-b border-border/60 bg-background">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-6xl py-10 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:py-12 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-carsa-primary">
@@ -76,7 +76,7 @@ export default async function LlantasPage({
               href="/"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
-                'h-11 shrink-0 border-carsa-tertiary/50'
+                'h-11 w-full shrink-0 border-carsa-tertiary/50 sm:w-auto'
               )}
             >
               Volver al inicio
@@ -86,7 +86,7 @@ export default async function LlantasPage({
       </div>
 
       {tires.length === 0 ? (
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mx-auto max-w-6xl py-12 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
           <p className="text-center text-muted-foreground">
             No hay llantas activas en el catálogo.
           </p>

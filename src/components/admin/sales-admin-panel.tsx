@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Eye, Plus } from 'lucide-react'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm, useWatch, type Resolver } from 'react-hook-form'
-import { z } from 'zod'
 
-import { AdminFeedbackBanner } from '@/components/admin/admin-feedback-banner'
+import { registerSaleFromOrder } from '@/app/admin/ventas/actions'
+import { publishCatalogInventoryBroadcast } from '@/lib/catalog-inventory-broadcast'
+import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,6 +35,7 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
+import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 
 type PaymentMethod = 'cash' | 'transfer' | 'card' | 'other'
@@ -65,6 +65,27 @@ type AdminSaleItem = {
   created_at: string | null
 }
 
+type AdminOrderOption = {
+  id: string
+  customer_id: string | null
+  customer_name: string | null
+  customer_phone: string | null
+  customer_email: string | null
+  status: string | null
+  total: number | string | null
+  created_at: string | null
+}
+
+type AdminOrderItemRow = {
+  id: string
+  item_type: string | null
+  item_id: string | null
+  item_name: string | null
+  quantity: number | null
+  unit_price: number | null
+  subtotal: number | null
+}
+
 const paymentOptions: { value: PaymentMethod; label: string }[] = [
   { value: 'cash', label: 'Efectivo' },
   { value: 'transfer', label: 'Transferencia' },
@@ -72,21 +93,68 @@ const paymentOptions: { value: PaymentMethod; label: string }[] = [
   { value: 'other', label: 'Otro' },
 ]
 
-const saleFormSchema = z.object({
-  customer_name: z.string().min(1, 'Nombre requerido').max(180),
-  customer_phone: z.string().min(1, 'Teléfono requerido').max(60),
-  payment_method: z.enum(['cash', 'transfer', 'card', 'other']),
-  total: z.coerce.number().min(0, 'Total no puede ser negativo'),
-  notes: z.string().max(5000).optional().or(z.literal('')),
-})
-
-type SaleFormValues = z.infer<typeof saleFormSchema>
+function paymentLabel(method: PaymentMethod): string {
+  return paymentOptions.find((p) => p.value === method)?.label ?? 'Efectivo'
+}
 
 const money = new Intl.NumberFormat('es-EC', {
   style: 'currency',
   currency: 'USD',
   minimumFractionDigits: 2,
 })
+
+function num(v: unknown): number {
+  const n = typeof v === 'string' ? Number(v) : Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
+function orderStatusLabel(status: string | null | undefined): string {
+  const s = (status ?? '').toLowerCase()
+  if (s === 'pending') return 'pendiente'
+  if (s === 'confirmed') return 'confirmado'
+  if (s === 'completed') return 'completado'
+  if (s === 'cancelled') return 'cancelado'
+  return s || '—'
+}
+
+/** Fecha del pedido solo día (p. ej. 06/05/2026) para el selector y el resumen. */
+function formatOrderDateShort(value: string | null | undefined): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat('es-EC', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date)
+}
+
+function formatOrderEmailSegment(email: string | null | undefined): string {
+  const e = (email ?? '').trim()
+  return e ? e : 'sin correo'
+}
+
+/**
+ * Etiqueta legible para identificar el pedido (el valor interno del select es el id, no visible).
+ * Formato: Nombre · Teléfono · Correo · Total · Fecha · Estado
+ */
+function formatOrderSelectLabel(o: AdminOrderOption): string {
+  const name = (o.customer_name ?? '').trim() || 'Cliente'
+  const phone = (o.customer_phone ?? '').trim() || '—'
+  const emailSeg = formatOrderEmailSegment(o.customer_email)
+  const totalStr = money.format(num(o.total))
+  const dateStr = formatOrderDateShort(o.created_at)
+  const statusStr = orderStatusLabel(o.status)
+  return `${name} · ${phone} · ${emailSeg} · ${totalStr} · ${dateStr} · ${statusStr}`
+}
+
+function itemTypeLabel(t: string | null | undefined): string {
+  const x = (t ?? '').toLowerCase()
+  if (x === 'tire') return 'Llanta'
+  if (x === 'battery') return 'Batería'
+  if (x === 'service') return 'Servicio'
+  return 'Ítem'
+}
 
 function PaymentBadge({ method }: { method: PaymentMethod }) {
   if (method === 'cash') {
@@ -115,15 +183,6 @@ function formatDate(value: string | null) {
   }).format(date)
 }
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null
-  return (
-    <p className="mt-1 text-xs font-medium text-destructive" role="alert">
-      {message}
-    </p>
-  )
-}
-
 export function SalesAdminPanel() {
   const supabase = useMemo(() => createSupabaseBrowser(), [])
   const [sales, setSales] = useState<AdminSale[]>([])
@@ -134,30 +193,26 @@ export function SalesAdminPanel() {
     variant: 'success' | 'error'
     text: string
   } | null>(null)
+  const dismissFeedback = useCallback(() => setFeedback(null), [])
 
   const [search, setSearch] = useState('')
   const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentMethod>('all')
   const [dateFilter, setDateFilter] = useState('')
 
   const [createOpen, setCreateOpen] = useState(false)
+
+  const [ordersForSale, setOrdersForSale] = useState<AdminOrderOption[]>([])
+  const [loadingOrders, setLoadingOrders] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('')
+  const [orderItemsPreview, setOrderItemsPreview] = useState<AdminOrderItemRow[]>([])
+  const [loadingOrderItems, setLoadingOrderItems] = useState(false)
+
+  const [fromOrderPayment, setFromOrderPayment] = useState<PaymentMethod>('cash')
+  const [fromOrderNotes, setFromOrderNotes] = useState('')
+
   const [detailOpen, setDetailOpen] = useState(false)
   const [selectedSale, setSelectedSale] = useState<AdminSale | null>(null)
   const [detailItems, setDetailItems] = useState<AdminSaleItem[]>([])
-
-  const form = useForm<SaleFormValues>({
-    resolver: zodResolver(saleFormSchema) as Resolver<SaleFormValues>,
-    defaultValues: {
-      customer_name: '',
-      customer_phone: '',
-      payment_method: 'cash',
-      total: 0,
-      notes: '',
-    },
-  })
-  const paymentMethodForm = useWatch({
-    control: form.control,
-    name: 'payment_method',
-  })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -188,11 +243,82 @@ export function SalesAdminPanel() {
     setLoading(false)
   }, [supabase])
 
+  const loadOrdersForSale = useCallback(async () => {
+    setLoadingOrders(true)
+    const { data, error } = await supabase
+      .from('orders')
+      .select(
+        'id, customer_id, customer_name, customer_phone, customer_email, status, total, created_at'
+      )
+      .eq('status', 'confirmed')
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    if (error) {
+      setFeedback({
+        variant: 'error',
+        text: 'No se pudieron cargar los pedidos disponibles.',
+      })
+      setOrdersForSale([])
+    } else {
+      setOrdersForSale((data ?? []) as AdminOrderOption[])
+    }
+    setLoadingOrders(false)
+  }, [supabase])
+
   useEffect(() => {
     queueMicrotask(() => {
       void load()
     })
   }, [load])
+
+  const refreshSalesAndOrderPicklist = useCallback(() => {
+    void load()
+    void loadOrdersForSale()
+  }, [load, loadOrdersForSale])
+
+  useSupabaseTableDebouncedRefresh('sales', refreshSalesAndOrderPicklist)
+  useSupabaseTableDebouncedRefresh('orders', refreshSalesAndOrderPicklist)
+
+  useEffect(() => {
+    if (!createOpen) return
+    queueMicrotask(() => {
+      void loadOrdersForSale()
+    })
+  }, [createOpen, loadOrdersForSale])
+
+  useEffect(() => {
+    if (!createOpen || !selectedOrderId) return
+
+    let cancelled = false
+    const run = async () => {
+      setLoadingOrderItems(true)
+      const { data, error } = await supabase
+        .from('order_items')
+        .select(
+          'id, item_type, item_id, item_name, quantity, unit_price, subtotal'
+        )
+        .eq('order_id', selectedOrderId)
+        .order('created_at', { ascending: true })
+
+      if (!cancelled) {
+        if (error) {
+          setOrderItemsPreview([])
+          setFeedback({
+            variant: 'error',
+            text: 'No se pudieron cargar los productos del pedido.',
+          })
+        } else {
+          setOrderItemsPreview((data ?? []) as AdminOrderItemRow[])
+        }
+        setLoadingOrderItems(false)
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [createOpen, selectedOrderId, supabase])
 
   const filteredSales = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -211,45 +337,57 @@ export function SalesAdminPanel() {
     })
   }, [sales, search, paymentFilter, dateFilter])
 
+  const selectedOrder = useMemo(
+    () => ordersForSale.find((o) => o.id === selectedOrderId) ?? null,
+    [ordersForSale, selectedOrderId]
+  )
+
   const openNewSale = () => {
-    form.reset({
-      customer_name: '',
-      customer_phone: '',
-      payment_method: 'cash',
-      total: 0,
-      notes: '',
-    })
+    setSelectedOrderId('')
+    setOrderItemsPreview([])
+    setFromOrderPayment('cash')
+    setFromOrderNotes('')
     setCreateOpen(true)
   }
 
-  const submitSale = form.handleSubmit(async (values) => {
-    setSaving(true)
+  const submitFromOrder = async () => {
     setFeedback(null)
-    const now = new Date().toISOString()
-    const payload = {
-      customer_name: values.customer_name.trim(),
-      customer_phone: values.customer_phone.trim(),
-      payment_method: values.payment_method,
-      total: Number(values.total),
-      notes: values.notes?.trim() || null,
-      updated_at: now,
-    }
-
-    const { error } = await supabase.from('sales').insert(payload)
-    setSaving(false)
-
-    if (error) {
+    if (!selectedOrderId) {
       setFeedback({
         variant: 'error',
-        text: 'No se pudo registrar la venta. Inténtalo nuevamente.',
+        text: 'Selecciona un pedido para continuar.',
       })
       return
     }
 
+    setSaving(true)
+    const result = await registerSaleFromOrder({
+      order_id: selectedOrderId,
+      payment_method: fromOrderPayment,
+      notes: fromOrderNotes.trim() || null,
+    })
+    setSaving(false)
+
+    if (!result.ok) {
+      setFeedback({ variant: 'error', text: result.message })
+      return
+    }
+
+    for (const row of result.inventory) {
+      publishCatalogInventoryBroadcast({
+        table: row.table,
+        id: row.id,
+        stock: row.stock,
+      })
+    }
+
     setCreateOpen(false)
+    setSelectedOrderId('')
+    setOrderItemsPreview([])
+    setFromOrderNotes('')
     setFeedback({ variant: 'success', text: 'Venta registrada correctamente.' })
     await load()
-  })
+  }
 
   const openDetail = async (sale: AdminSale) => {
     setSelectedSale(sale)
@@ -291,7 +429,7 @@ export function SalesAdminPanel() {
             Ventas
           </h2>
           <p className="text-sm text-muted-foreground">
-            Revisa el historial y registra nuevas ventas.
+            Historial de ventas y registro desde pedidos ya confirmados con el cliente.
           </p>
         </div>
         <Button
@@ -304,9 +442,12 @@ export function SalesAdminPanel() {
         </Button>
       </div>
 
-      {feedback ? (
-        <AdminFeedbackBanner variant={feedback.variant} message={feedback.text} />
-      ) : null}
+      <AdminFloatingToast
+        open={Boolean(feedback?.text)}
+        variant={feedback?.variant ?? 'success'}
+        message={feedback?.text ?? ''}
+        onDismiss={dismissFeedback}
+      />
 
       <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 sm:grid-cols-3">
         <div className="space-y-2">
@@ -321,15 +462,26 @@ export function SalesAdminPanel() {
         <div className="space-y-2">
           <Label htmlFor="sales-method">Método de pago</Label>
           <Select
-            items={[
-              { value: 'all', label: 'Todos' },
-              ...paymentOptions.map((p) => ({ value: p.value, label: p.label })),
-            ]}
             value={paymentFilter}
-            onValueChange={(value) => setPaymentFilter((value as typeof paymentFilter) ?? 'all')}
+            onValueChange={(value) =>
+              setPaymentFilter(
+                value === 'all' ||
+                  value === 'cash' ||
+                  value === 'transfer' ||
+                  value === 'card' ||
+                  value === 'other'
+                  ? (value as typeof paymentFilter)
+                  : 'all'
+              )
+            }
           >
             <SelectTrigger id="sales-method" className="h-9 w-full min-w-0">
-              <SelectValue placeholder="Filtrar método" />
+              <span
+                data-slot="select-value"
+                className="flex flex-1 truncate text-left text-sm"
+              >
+                {paymentFilter === 'all' ? 'Todos' : paymentLabel(paymentFilter)}
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -352,7 +504,7 @@ export function SalesAdminPanel() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-card/40">
+      <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <TireLoadingIcon className="size-8" aria-label="Cargando ventas" />
@@ -414,95 +566,204 @@ export function SalesAdminPanel() {
         )}
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Nueva venta</DialogTitle>
-            <DialogDescription>
-              Registra una venta manual con la información principal.
-            </DialogDescription>
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open)
+          if (!open) {
+            setSelectedOrderId('')
+            setOrderItemsPreview([])
+            setFromOrderNotes('')
+          }
+        }}
+      >
+        <DialogContent className="flex max-h-[min(92dvh,720px)] w-[min(100%-1rem,40rem)] flex-col gap-0 overflow-hidden border-border/70 bg-card p-0 sm:max-w-none">
+          <DialogHeader className="shrink-0 border-b border-border/50 px-4 py-2.5 pr-10">
+            <DialogTitle className="text-base leading-tight">Nueva venta</DialogTitle>
           </DialogHeader>
-          <form onSubmit={submitSale} className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="sale-customer-name">Nombre del cliente</Label>
-                <Input id="sale-customer-name" {...form.register('customer_name')} />
-                <FieldError message={form.formState.errors.customer_name?.message} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sale-customer-phone">Teléfono</Label>
-                <Input id="sale-customer-phone" {...form.register('customer_phone')} />
-                <FieldError message={form.formState.errors.customer_phone?.message} />
-              </div>
-            </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="sale-payment-method">Método de pago</Label>
-                <Select
-                  items={paymentOptions}
-                  value={paymentMethodForm}
-                  onValueChange={(value) => {
-                    form.setValue('payment_method', (value as PaymentMethod) ?? 'cash')
-                  }}
-                >
-                  <SelectTrigger id="sale-payment-method" className="h-9 w-full min-w-0">
-                    <SelectValue placeholder="Selecciona método" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError message={form.formState.errors.payment_method?.message} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sale-total">Total</Label>
-                <Input
-                  id="sale-total"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  {...form.register('total')}
-                />
-                <FieldError message={form.formState.errors.total?.message} />
-              </div>
-            </div>
-
+          <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
             <div className="space-y-2">
-              <Label htmlFor="sale-notes">Notas</Label>
-              <Textarea
-                id="sale-notes"
-                rows={3}
-                placeholder="Opcional"
-                {...form.register('notes')}
-              />
-              <FieldError message={form.formState.errors.notes?.message} />
-            </div>
-
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={saving}
-                className="bg-carsa-primary text-white hover:bg-carsa-primary-hover"
-              >
-                {saving ? (
-                  <span className="inline-flex items-center gap-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="sale-pick-order">Seleccionar pedido confirmado</Label>
+                {loadingOrders ? (
+                  <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                     <TireLoadingIcon className="size-4" decorative />
-                    Guardando…
-                  </span>
+                    Cargando pedidos…
+                  </div>
+                ) : ordersForSale.length === 0 ? (
+                  <p className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                    No hay pedidos confirmados listos para venta. Revisa en Pedidos que el estado
+                    sea “Confirmado” antes de registrar aquí.
+                  </p>
                 ) : (
-                  'Guardar'
+                  <Select
+                    value={selectedOrderId}
+                    onValueChange={(value) => {
+                      setSelectedOrderId(value ?? '')
+                      setOrderItemsPreview([])
+                    }}
+                  >
+                    <SelectTrigger
+                      id="sale-pick-order"
+                      className="h-auto min-h-9 w-full min-w-0 py-1.5 text-left [&>span]:line-clamp-2 [&>span]:text-left [&>span]:text-xs [&>span]:leading-snug sm:[&>span]:text-sm"
+                    >
+                      {selectedOrderId === '' ? (
+                        <SelectValue placeholder="Selecciona un pedido confirmado" />
+                      ) : (
+                        <span
+                          data-slot="select-value"
+                          className="flex flex-1 text-left text-xs leading-snug line-clamp-2 sm:text-sm"
+                        >
+                          {selectedOrder
+                            ? formatOrderSelectLabel(selectedOrder)
+                            : 'Selecciona un pedido confirmado'}
+                        </span>
+                      )}
+                    </SelectTrigger>
+                    <SelectContent className="max-h-80 min-w-[var(--anchor-width)]">
+                      {ordersForSale.map((o) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          <span className="block max-w-[min(100vw-2rem,36rem)] whitespace-normal text-left text-sm leading-snug">
+                            {formatOrderSelectLabel(o)}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
-              </Button>
-            </DialogFooter>
-          </form>
+              </div>
+
+              {selectedOrder ? (
+                <div className="space-y-1.5 rounded-lg border border-border/60 bg-muted/15 p-2.5">
+                  <p className="text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
+                    Productos del pedido
+                  </p>
+                  <div className="scrollbar-none overflow-x-auto rounded-md border border-border/50">
+                      {loadingOrderItems ? (
+                        <div className="flex justify-center py-8 text-muted-foreground">
+                          <TireLoadingIcon className="size-6" decorative />
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-border/50 hover:bg-transparent">
+                              <TableHead>Tipo</TableHead>
+                              <TableHead>Descripción</TableHead>
+                              <TableHead className="w-12 text-right">Cant.</TableHead>
+                              <TableHead className="w-28 text-right">Precio u.</TableHead>
+                              <TableHead className="w-28 text-right">Subtotal</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {orderItemsPreview.length === 0 ? (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={5}
+                                  className="text-center text-sm text-muted-foreground"
+                                >
+                                  Este pedido no tiene productos listados.
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              orderItemsPreview.map((row) => (
+                                <TableRow key={row.id} className="border-border/40">
+                                  <TableCell className="text-xs text-muted-foreground">
+                                    {itemTypeLabel(row.item_type)}
+                                  </TableCell>
+                                  <TableCell className="max-w-[180px]">
+                                    <p className="truncate text-sm font-medium" title={row.item_name ?? ''}>
+                                      {row.item_name?.trim() || '—'}
+                                    </p>
+                                  </TableCell>
+                                  <TableCell className="text-right tabular-nums text-sm">
+                                    {row.quantity ?? 0}
+                                  </TableCell>
+                                  <TableCell className="text-right tabular-nums text-sm">
+                                    {money.format(num(row.unit_price))}
+                                  </TableCell>
+                                  <TableCell className="text-right tabular-nums text-sm">
+                                    {money.format(num(row.subtotal))}
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      )}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sale-from-order-payment">Método de pago</Label>
+                  <Select
+                    value={fromOrderPayment}
+                    onValueChange={(value) => {
+                      const next: PaymentMethod =
+                        value === 'cash' ||
+                        value === 'transfer' ||
+                        value === 'card' ||
+                        value === 'other'
+                          ? value
+                          : 'cash'
+                      setFromOrderPayment(next)
+                    }}
+                  >
+                    <SelectTrigger id="sale-from-order-payment" className="h-9 w-full min-w-0">
+                      <span
+                        data-slot="select-value"
+                        className="flex flex-1 truncate text-left text-sm"
+                      >
+                        {paymentLabel(fromOrderPayment)}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="sale-from-order-notes">Notas (opcional)</Label>
+                  <Textarea
+                    id="sale-from-order-notes"
+                    rows={2}
+                    className="min-h-0 resize-none text-sm"
+                    placeholder="Ej. factura a nombre de…"
+                    value={fromOrderNotes}
+                    onChange={(e) => setFromOrderNotes(e.target.value)}
+                    maxLength={5000}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-2 !mx-0 !mb-0 shrink-0 gap-2 border-0 bg-transparent px-0 py-0 pt-1 sm:justify-end">
+                <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  disabled={saving || !selectedOrderId || loadingOrders}
+                  onClick={() => void submitFromOrder()}
+                  className="bg-carsa-primary text-white hover:bg-carsa-primary-hover"
+                >
+                  {saving ? (
+                    <span className="inline-flex items-center gap-2">
+                      <TireLoadingIcon className="size-4" decorative />
+                      Guardando…
+                    </span>
+                  ) : (
+                    'Guardar venta'
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
