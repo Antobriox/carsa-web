@@ -442,7 +442,7 @@ export function BrandsAdminPanel() {
       </Tabs>
 
       <Dialog open={tireDialogOpen} onOpenChange={setTireDialogOpen}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),28rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingTire ? 'Editar marca de llanta' : 'Nueva marca de llanta'}
@@ -483,7 +483,7 @@ export function BrandsAdminPanel() {
       </Dialog>
 
       <Dialog open={batteryDialogOpen} onOpenChange={setBatteryDialogOpen}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),28rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingBattery ? 'Editar marca de batería' : 'Nueva marca de batería'}
@@ -524,7 +524,7 @@ export function BrandsAdminPanel() {
       </Dialog>
 
       <Dialog open={!!deleteTire} onOpenChange={() => setDeleteTire(null)}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),28rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>¿Eliminar marca de llanta?</DialogTitle>
             <DialogDescription>
@@ -549,7 +549,7 @@ export function BrandsAdminPanel() {
       </Dialog>
 
       <Dialog open={!!deleteBattery} onOpenChange={() => setDeleteBattery(null)}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),28rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>¿Eliminar marca de batería?</DialogTitle>
             <DialogDescription>

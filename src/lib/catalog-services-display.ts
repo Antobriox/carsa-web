@@ -42,6 +42,22 @@ export function classifyAlignmentBalance(
 const COMBINED_DESCRIPTION =
   'Servicio completo para mejorar la estabilidad del vehículo, reducir vibraciones y evitar desgaste irregular de las llantas.'
 
+function parseCatalogPrice(value: number | string | null | undefined): number {
+  const n = typeof value === 'string' ? Number(value) : Number(value ?? 0)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
+
+/** Suma precios de servicios fusionados (p. ej. alineación + balanceo). */
+function combineServicePrices(
+  ...values: (number | string | null | undefined)[]
+): number {
+  let total = 0
+  for (const v of values) {
+    total += parseCatalogPrice(v)
+  }
+  return total
+}
+
 /**
  * Sustituye las dos cards de Alineación y Balanceo por una sola card visual,
  * sin tocar Supabase. Si no hay par claro, devuelve el arreglo original.
@@ -71,7 +87,7 @@ export function mergeAlignmentBalanceServices(
     name: 'Alineación y balanceo',
     slug: 'alineacion-y-balanceo',
     description: COMBINED_DESCRIPTION,
-    price: 0,
+    price: combineServicePrices(align.price, balance.price),
     image_url: align.image_url ?? balance.image_url ?? null,
     is_featured: align.is_featured || balance.is_featured,
     display_placeholder: 'gauge',

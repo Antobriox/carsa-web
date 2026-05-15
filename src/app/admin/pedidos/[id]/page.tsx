@@ -11,6 +11,16 @@ export const metadata = {
   title: 'Admin · Detalle pedido',
 }
 
+function formatOrderStatus(value: unknown): string {
+  const s = String(value ?? '').toLowerCase()
+  if (s === 'pending' || s === 'pendiente') return 'Pendiente'
+  if (s === 'confirmed' || s === 'confirmado') return 'Confirmado'
+  if (s === 'cancelled' || s === 'cancelado') return 'Cancelado'
+  if (s === 'completed' || s === 'completado') return 'Completado'
+  if (!s) return '—'
+  return String(value)
+}
+
 export default async function AdminPedidoDetailPage({
   params,
 }: {
@@ -33,6 +43,13 @@ export default async function AdminPedidoDetailPage({
     'amount',
     'grand_total',
   ])
+  const customerName = pickField(row, [
+    'customer_name',
+    'full_name',
+    'client_name',
+    'nombre',
+    'name',
+  ])
 
   return (
     <div className="space-y-6">
@@ -47,21 +64,16 @@ export default async function AdminPedidoDetailPage({
       </Link>
       <div>
         <h2 className="font-heading text-2xl font-semibold">Detalle del pedido</h2>
-        <p className="text-sm text-muted-foreground">ID: {String(row.id)}</p>
+        <p className="text-sm text-muted-foreground">
+          {customerName !== '—' ? customerName : 'Cliente'} ·{' '}
+          {formatDate(row.created_at ?? row.fecha ?? row.date)}
+        </p>
       </div>
 
       <dl className="grid gap-4 rounded-xl border border-border/70 bg-card/40 p-4 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-muted-foreground">Cliente</dt>
-          <dd className="font-medium">
-            {pickField(row, [
-              'customer_name',
-              'full_name',
-              'client_name',
-              'nombre',
-              'name',
-            ])}
-          </dd>
+          <dd className="font-medium">{customerName}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Teléfono</dt>
@@ -76,7 +88,11 @@ export default async function AdminPedidoDetailPage({
         </div>
         <div>
           <dt className="text-muted-foreground">Estado</dt>
-          <dd>{pickField(row, ['status', 'estado', 'order_status'])}</dd>
+          <dd>
+            {formatOrderStatus(
+              row.status ?? row.estado ?? row.order_status
+            )}
+          </dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Total</dt>
@@ -87,15 +103,6 @@ export default async function AdminPedidoDetailPage({
           <dd>{formatDate(row.created_at ?? row.fecha ?? row.date)}</dd>
         </div>
       </dl>
-
-      <details className="rounded-lg border border-border/60 bg-muted/20 p-3 text-xs">
-        <summary className="cursor-pointer font-medium text-muted-foreground">
-          Datos crudos (JSON)
-        </summary>
-        <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">
-          {JSON.stringify(data, null, 2)}
-        </pre>
-      </details>
     </div>
   )
 }

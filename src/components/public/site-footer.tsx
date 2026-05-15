@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { MapPin, MessageCircle } from 'lucide-react'
 
 import { BusinessHoursBlock } from '@/components/public/business-hours-block'
@@ -60,14 +59,14 @@ export function SiteFooter() {
             </p>
             <ul className="mt-4 space-y-2.5">
               <li>
-                <Link href="#" className={footerLinkClass}>
-                  Términos y condiciones
-                </Link>
+                <span className="text-sm text-carsa-neutral/80">
+                  Términos y condiciones — próximamente
+                </span>
               </li>
               <li>
-                <Link href="#" className={footerLinkClass}>
-                  Política de privacidad
-                </Link>
+                <span className="text-sm text-carsa-neutral/80">
+                  Política de privacidad — próximamente
+                </span>
               </li>
             </ul>
           </div>
@@ -123,10 +122,7 @@ export function SiteFooter() {
           <div className="space-y-3">
             <p className="font-medium text-carsa-canvas">Horario</p>
             <BusinessHoursBlock />
-            <p className="text-xs text-carsa-neutral">
-              Hora Ecuador (
-              <span className="text-carsa-canvas/80">America/Guayaquil</span>).
-            </p>
+            <p className="text-xs text-carsa-neutral">Horario en hora de Ecuador.</p>
           </div>
         </div>
 

@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useRef, useState } from 'react'
-import { Loader2, LogOut, Menu, Shield, ShoppingCart, User } from 'lucide-react'
+import { Loader2, LogOut, Menu, Shield, ShoppingCart } from 'lucide-react'
 
+import { UserAccountAvatar } from '@/components/auth/user-account-avatar'
 import { CarsaLogoMark } from '@/components/branding/carsa-logo-mark'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
@@ -15,6 +16,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { useAuth } from '@/context/auth-context'
+import { devError } from '@/lib/dev-log'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { useCartStore } from '@/stores/cart-store'
 import { cn } from '@/lib/utils'
@@ -29,8 +31,8 @@ const nav = [
 function AuthSkeleton() {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2" aria-busy="true">
-      <div className="h-8 w-[4.5rem] animate-pulse rounded-md bg-muted/80 sm:h-9" />
-      <div className="h-8 w-[5.5rem] animate-pulse rounded-md bg-muted/80 sm:h-9" />
+      <div className="size-9 animate-pulse rounded-full bg-muted/80 sm:size-10" />
+      <div className="h-8 w-24 animate-pulse rounded-md bg-muted/80 sm:h-9" />
     </div>
   )
 }
@@ -61,7 +63,7 @@ export function SiteHeader() {
     try {
       const { error } = await supabase.auth.signOut({ scope: 'local' })
       if (error) {
-        console.error('[CARSA logout] error', error)
+        devError('[CARSA logout] error', error)
         setSignOutError(
           'No se pudo cerrar sesión del todo. Si sigues viendo tu cuenta, recarga la página.'
         )
@@ -73,7 +75,7 @@ export function SiteHeader() {
       router.replace('/')
       router.refresh()
     } catch (error) {
-      console.error('[CARSA logout] unexpected error', error)
+      devError('[CARSA logout] unexpected error', error)
       setSignOutError(
         'Ocurrió un error al cerrar sesión. Se actualizará la página.'
       )
@@ -134,17 +136,10 @@ export function SiteHeader() {
           Admin
         </Link>
       ) : null}
-      <Link
-        href="/cuenta"
-        className={cn(
-          buttonVariants({ variant: 'outline', size: 'sm' }),
-          'h-8 border-border/80 bg-muted/20 px-2.5 text-[0.7rem] font-semibold',
-          'sm:h-9 sm:px-4 sm:text-sm'
-        )}
-      >
-        <User className="mr-1 size-3.5 sm:mr-1.5" aria-hidden />
-        Mi cuenta
-      </Link>
+      <UserAccountAvatar
+        fullName={profile?.full_name}
+        email={user.email}
+      />
       <Button
         type="button"
         variant="ghost"
@@ -158,7 +153,7 @@ export function SiteHeader() {
         ) : (
           <>
             <LogOut className="mr-1 size-3.5 sm:mr-1.5" aria-hidden />
-            Cerrar sesión
+            <span className="hidden lg:inline">Cerrar sesión</span>
           </>
         )}
       </Button>
@@ -208,17 +203,14 @@ export function SiteHeader() {
           Admin
         </Link>
       ) : null}
-      <Link
-        href="/cuenta"
-        onClick={closeMobile}
-        className={cn(
-          buttonVariants({ variant: 'outline', size: 'lg' }),
-          'w-full justify-center'
-        )}
-      >
-        <User className="mr-2 size-4" aria-hidden />
-        Mi cuenta
-      </Link>
+      <div className="flex justify-center py-1">
+        <UserAccountAvatar
+          fullName={profile?.full_name}
+          email={user.email}
+          size="lg"
+          onClick={closeMobile}
+        />
+      </div>
       <Button
         type="button"
         variant="outline"
@@ -348,6 +340,14 @@ export function SiteHeader() {
             className="hidden h-8 w-px shrink-0 bg-gradient-to-b from-transparent via-border/80 to-transparent sm:block"
             aria-hidden
           />
+
+          {!loading && user ? (
+            <UserAccountAvatar
+              fullName={profile?.full_name}
+              email={user.email}
+              className="md:hidden"
+            />
+          ) : null}
 
           <div className="hidden md:block">{authDesktop}</div>
         </div>

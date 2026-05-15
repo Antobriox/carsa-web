@@ -62,8 +62,16 @@ export const serviceSchema = z.object({
   is_featured: z.boolean(),
 })
 
+export const promotionSchema = z.object({
+  title: z.string().max(200).optional().or(z.literal('')),
+  image_url: z.string().max(2000).optional().or(z.literal('')).nullable(),
+  is_active: z.boolean(),
+  is_popup: z.boolean(),
+})
+
 export type TireFormValues = z.infer<typeof tireSchema>
 export type BatteryFormValues = z.infer<typeof batterySchema>
 export type ServiceFormValues = z.infer<typeof serviceSchema>
 export type TireBrandFormValues = z.infer<typeof tireBrandSchema>
 export type BatteryBrandFormValues = z.infer<typeof batteryBrandSchema>
+export type PromotionFormValues = z.infer<typeof promotionSchema>

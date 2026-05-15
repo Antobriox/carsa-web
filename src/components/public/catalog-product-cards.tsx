@@ -92,11 +92,20 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
             'border-border/80 bg-card/80 transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-carsa-primary/15'
           )}
         >
-          <div className="relative aspect-[4/3] w-full bg-carsa-surface/80">
+          <button
+            type="button"
+            onClick={() => handleDialogOpenChange(true)}
+            className={cn(
+              'relative aspect-[4/3] w-full bg-carsa-surface/80',
+              'cursor-pointer transition-colors hover:bg-carsa-surface',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-carsa-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card'
+            )}
+            aria-label={`Ver detalle de ${tire.name}`}
+          >
             {tireImageSrc ? (
               <Image
                 src={tireImageSrc}
-                alt={tire.name}
+                alt=""
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-contain p-4"
@@ -108,14 +117,14 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
             )}
             {tire.is_featured && (
               <Badge
-                className="absolute left-3 top-3 border-carsa-primary/35 bg-carsa-primary/15 text-carsa-primary backdrop-blur-sm"
+                className="pointer-events-none absolute left-3 top-3 border-carsa-primary/35 bg-carsa-primary/15 text-carsa-primary backdrop-blur-sm"
                 variant="outline"
               >
                 <Star className="size-3" aria-hidden />
                 Destacada
               </Badge>
             )}
-          </div>
+          </button>
           <CardHeader className="border-b border-border/60 pb-3">
             <CardTitle className="text-base leading-snug">{tire.name}</CardTitle>
             {brand ? (
@@ -161,9 +170,9 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
             'sm:max-h-[min(88dvh,620px)] sm:max-w-[min(100%-2rem,42rem)] lg:max-w-[46rem]'
           )}
         >
-          <div className="flex max-h-[inherit] min-h-0 flex-col overflow-hidden sm:flex-row">
+          <div className="flex max-h-[inherit] min-h-0 flex-col overflow-hidden md:flex-row">
             {/* Columna imagen: altura fija en desktop para que el panel no exija scroll */}
-            <div className="relative flex w-full shrink-0 items-center justify-center border-b border-border/50 bg-carsa-surface/80 sm:w-[260px] sm:border-b-0 sm:border-r md:w-[280px]">
+            <div className="relative flex w-full shrink-0 items-center justify-center border-b border-border/50 bg-carsa-surface/80 md:w-[280px] md:border-b-0 md:border-r">
               <div className="relative h-36 w-full sm:h-[260px] md:h-[280px]">
                 {tireImageSrc ? (
                   <Image
@@ -437,11 +446,20 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
             'border-border/80 bg-card/80 transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-carsa-primary/15'
           )}
         >
-          <div className="relative aspect-[4/3] w-full bg-carsa-surface/80">
+          <button
+            type="button"
+            onClick={() => handleDialogOpenChange(true)}
+            className={cn(
+              'relative aspect-[4/3] w-full bg-carsa-surface/80',
+              'cursor-pointer transition-colors hover:bg-carsa-surface',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-carsa-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card'
+            )}
+            aria-label={`Ver detalle de ${battery.name}`}
+          >
             {batteryImageSrc ? (
               <Image
                 src={batteryImageSrc}
-                alt={battery.name}
+                alt=""
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-contain p-4"
@@ -453,14 +471,14 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
             )}
             {battery.is_featured && (
               <Badge
-                className="absolute left-3 top-3 border-carsa-primary/35 bg-carsa-primary/15 text-carsa-primary backdrop-blur-sm"
+                className="pointer-events-none absolute left-3 top-3 border-carsa-primary/35 bg-carsa-primary/15 text-carsa-primary backdrop-blur-sm"
                 variant="outline"
               >
                 <Star className="size-3" aria-hidden />
                 Destacada
               </Badge>
             )}
-          </div>
+          </button>
           <CardHeader className="border-b border-border/60 pb-3">
             <CardTitle className="text-base leading-snug">{battery.name}</CardTitle>
             {brand ? (
@@ -506,8 +524,8 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
             'sm:max-h-[min(88dvh,620px)] sm:max-w-[min(100%-2rem,42rem)] lg:max-w-[46rem]'
           )}
         >
-          <div className="flex max-h-[inherit] min-h-0 flex-col overflow-hidden sm:flex-row">
-            <div className="relative flex w-full shrink-0 items-center justify-center border-b border-border/50 bg-carsa-surface/80 sm:w-[260px] sm:border-b-0 sm:border-r md:w-[280px]">
+          <div className="flex max-h-[inherit] min-h-0 flex-col overflow-hidden md:flex-row">
+            <div className="relative flex w-full shrink-0 items-center justify-center border-b border-border/50 bg-carsa-surface/80 md:w-[280px] md:border-b-0 md:border-r">
               <div className="relative h-36 w-full sm:h-[260px] md:h-[280px]">
                 {batteryImageSrc ? (
                   <Image
@@ -762,8 +780,12 @@ export function ServiceCard({
   service: CatalogService
   consultCtaLabel?: string
 }) {
+  const unitPrice = priceNumber(service.price)
+  const hasPrice = unitPrice > 0
   const consult = buildWhatsAppUrl(
-    `Hola CARSA, me interesa el servicio: ${service.name}.`
+    hasPrice
+      ? `Hola CARSA, me interesa el servicio: ${service.name}. Precio referencial: ${formatMxn(unitPrice)}.`
+      : `Hola CARSA, me interesa el servicio: ${service.name}.`
   )
   const PlaceholderIcon =
     service.display_placeholder === 'gauge' ? CircleGauge : Wrench
@@ -811,7 +833,18 @@ export function ServiceCard({
           </p>
         )}
       </CardContent>
-      <CardFooter className="flex justify-end border-border/60 bg-muted/20">
+      <CardFooter className="flex flex-wrap items-center justify-between gap-3 border-border/60 bg-muted/20">
+        <div>
+          {hasPrice ? (
+            <p className="text-lg font-semibold tracking-tight text-foreground">
+              {formatMxn(unitPrice)}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Cotización según tu vehículo
+            </p>
+          )}
+        </div>
         <a
           href={consult ?? '#contacto'}
           target={consult ? '_blank' : undefined}

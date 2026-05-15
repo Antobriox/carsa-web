@@ -30,6 +30,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
 import { serviceSchema, type ServiceFormValues } from '@/lib/admin/schemas'
+import { devError } from '@/lib/dev-log'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { uploadProductImage } from '@/lib/supabase/storage-product-image'
 import type { AdminService } from '@/types/admin'
@@ -255,7 +256,7 @@ export function ServicesAdminPanel() {
       closeDialog()
       await load()
     } catch (e: unknown) {
-      console.error(
+      devError(
         editing
           ? '[admin/servicios] error al editar servicio'
           : '[admin/servicios] error al crear servicio',
@@ -424,7 +425,7 @@ export function ServicesAdminPanel() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-2xl">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),42rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar servicio' : 'Nuevo servicio'}</DialogTitle>
             <DialogDescription>
@@ -440,11 +441,10 @@ export function ServicesAdminPanel() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="s-slug">Slug</Label>
+              <Label htmlFor="s-slug">Enlace del servicio (opcional)</Label>
               <Input
                 id="s-slug"
-                className="font-mono text-sm"
-                placeholder="alineacion-y-balanceo"
+                placeholder="Ej. alineacion y balanceo"
                 {...register('slug')}
               />
               <FieldError message={errors.slug?.message} />
@@ -455,7 +455,7 @@ export function ServicesAdminPanel() {
               <Textarea
                 id="s-desc"
                 rows={3}
-                placeholder="Opcional"
+                placeholder="Describe el servicio para el catálogo"
                 {...register('description')}
               />
               <FieldError message={errors.description?.message} />
@@ -538,7 +538,7 @@ export function ServicesAdminPanel() {
       </Dialog>
 
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),28rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>¿Eliminar servicio?</DialogTitle>
             <DialogDescription>

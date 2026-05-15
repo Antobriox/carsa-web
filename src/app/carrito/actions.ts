@@ -3,6 +3,7 @@
 import { z } from 'zod'
 
 import { getSessionWithProfile, hasRole } from '@/lib/auth/session'
+import { sendNewOrderPush } from '@/lib/push/send-new-order'
 import { createClient } from '@/lib/supabase/server'
 
 const cartLineSchema = z.object({
@@ -53,7 +54,7 @@ export async function submitCartOrder(
     return {
       ok: false,
       message:
-        'Las cotizaciones desde el carrito son solo para clientes. Usa el panel de administración.',
+        'El carrito en línea es solo para clientes. Gestiona pedidos desde el área de administración.',
     }
   }
 
@@ -244,6 +245,16 @@ export async function submitCartOrder(
       message:
         'Tu pedido quedó incompleto. Escríbenos por WhatsApp y lo revisamos de inmediato.',
     }
+  }
+
+  try {
+    await sendNewOrderPush({
+      order_id: orderId,
+      customer_name: customerName,
+      total,
+    })
+  } catch {
+    /* el pedido ya se creó */
   }
 
   return { ok: true }

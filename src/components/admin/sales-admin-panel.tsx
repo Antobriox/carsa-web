@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Eye, Plus } from 'lucide-react'
 
 import { registerSaleFromOrder } from '@/app/admin/ventas/actions'
+import { adminDialogWide } from '@/lib/admin-dialog-classes'
+import { sanitizeUserMessage } from '@/lib/user-facing-error'
 import { publishCatalogInventoryBroadcast } from '@/lib/catalog-inventory-broadcast'
 import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { Badge } from '@/components/ui/badge'
@@ -369,7 +371,10 @@ export function SalesAdminPanel() {
     setSaving(false)
 
     if (!result.ok) {
-      setFeedback({ variant: 'error', text: result.message })
+      setFeedback({
+        variant: 'error',
+        text: sanitizeUserMessage(result.message),
+      })
       return
     }
 
@@ -449,7 +454,7 @@ export function SalesAdminPanel() {
         onDismiss={dismissFeedback}
       />
 
-      <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 sm:grid-cols-3">
+      <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="sales-search">Buscar por cliente o teléfono</Label>
           <Input
@@ -768,8 +773,8 @@ export function SalesAdminPanel() {
       </Dialog>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-4xl">
-          <DialogHeader>
+        <DialogContent className={adminDialogWide}>
+          <DialogHeader className="shrink-0 px-4 pt-4 sm:px-6">
             <DialogTitle>Detalle de venta</DialogTitle>
             <DialogDescription>
               Revisa datos del cliente, método de pago, notas y items vendidos.
@@ -777,7 +782,7 @@ export function SalesAdminPanel() {
           </DialogHeader>
 
           {selectedSale ? (
-            <div className="space-y-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-4 sm:px-6">
               <div className="grid gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Cliente</p>
@@ -808,7 +813,7 @@ export function SalesAdminPanel() {
                 </p>
               </div>
 
-              <div className="overflow-hidden rounded-lg border border-border/60">
+              <div className="table-scroll rounded-lg border border-border/60">
                 {loadingDetail ? (
                   <div className="flex items-center justify-center py-12 text-muted-foreground">
                     <TireLoadingIcon className="size-7" aria-label="Cargando detalle de venta" />
@@ -859,7 +864,7 @@ export function SalesAdminPanel() {
             </div>
           ) : null}
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t border-border/60 px-4 py-3 sm:px-6">
             <Button type="button" variant="outline" onClick={() => setDetailOpen(false)}>
               Cerrar
             </Button>

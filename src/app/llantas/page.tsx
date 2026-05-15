@@ -15,6 +15,7 @@ import {
   asTireList,
   fetchActiveTires,
 } from '@/lib/supabase/catalog-fetch'
+import { CATALOG_LOAD_MESSAGE } from '@/lib/user-facing-error'
 import { cn } from '@/lib/utils'
 
 export const metadata = {
@@ -44,7 +45,7 @@ export default async function LlantasPage({
                 <AlertCircle className="size-5 shrink-0" aria-hidden />
                 <CardTitle>No se pudo cargar el catálogo</CardTitle>
               </div>
-              <CardDescription>{error.message}</CardDescription>
+              <CardDescription>{CATALOG_LOAD_MESSAGE}</CardDescription>
             </CardHeader>
           </Card>
         </div>

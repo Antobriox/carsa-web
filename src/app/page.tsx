@@ -20,6 +20,10 @@ import {
   fetchActiveServices,
   fetchActiveTires,
 } from '@/lib/supabase/catalog-fetch'
+import {
+  asPopupPromotionList,
+  fetchActivePopupPromotions,
+} from '@/lib/supabase/promotions-fetch'
 import type {
   CatalogBattery,
   CatalogPageProps,
@@ -38,10 +42,11 @@ function pickHeroImage<T extends { image_url: string | null; is_featured: boolea
 export default async function Home() {
   await redirectAdminToPanel()
 
-  const [tiresRes, batteriesRes, servicesRes] = await Promise.all([
+  const [tiresRes, batteriesRes, servicesRes, promotionsRes] = await Promise.all([
     fetchActiveTires(),
     fetchActiveBatteries(),
     fetchActiveServices(),
+    fetchActivePopupPromotions(),
   ])
 
   const tiresError = tiresRes.error
@@ -86,12 +91,15 @@ export default async function Home() {
   const tireList = asTireList(tiresRes.data) as CatalogTire[]
   const batteryList = asBatteryList(batteriesRes.data) as CatalogBattery[]
 
+  const popupPromotions = asPopupPromotionList(promotionsRes.data)
+
   const catalog: CatalogPageProps = {
     tires: tireList,
     batteries: batteryList,
     services: asServiceList(servicesRes.data) as CatalogService[],
     heroTireImageUrl: pickHeroImage(tireList),
     heroBatteryImageUrl: pickHeroImage(batteryList),
+    popupPromotions,
   }
 
   return (

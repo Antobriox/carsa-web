@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import {
   EmptyBlock,
@@ -27,6 +27,10 @@ import {
   ServiceProductGrid,
   TireProductGrid,
 } from '@/components/public/catalog-product-grids'
+import {
+  PromotionPopup,
+  type PromotionPopupHandle,
+} from '@/components/promotions/promotion-popup'
 import { buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -155,9 +159,12 @@ export function PublicCatalogView({
   services,
   heroTireImageUrl,
   heroBatteryImageUrl,
+  popupPromotions,
 }: CatalogPageProps) {
   const router = useRouter()
+  const promotionPopupRef = useRef<PromotionPopupHandle>(null)
   const [query, setQuery] = useState('')
+  const hasPopupPromotions = popupPromotions.length > 0
   const liveTires = useTiresInventoryRealtime(tires)
   const liveBatteries = useBatteriesInventoryRealtime(batteries)
 
@@ -189,18 +196,13 @@ export function PublicCatalogView({
   const workshopWhatsApp = buildWhatsAppUrl(
     'Hola CARSA, quiero cotización / cita en taller.'
   )
-  const medidaWhatsApp =
-    buildWhatsAppUrl(
-      'Hola CARSA, no encuentro mi medida / necesito ayuda para elegir llanta o batería.'
-    ) ?? '#contacto'
-
   const q = query.trim()
 
   return (
     <div className="flex flex-col">
       <section
         id="inicio"
-        className="relative min-h-[min(68vh,38rem)] scroll-mt-28 overflow-hidden border-b border-border/60 sm:min-h-0 sm:scroll-mt-32"
+        className="relative min-h-[min(68vh,38rem)] scroll-mt-28 overflow-hidden border-b border-border/60 sm:min-h-[42vh] md:min-h-[36vh] lg:min-h-0 sm:scroll-mt-32"
       >
         <Image
           src="/Imagen/CARSARportada.png"
@@ -337,21 +339,18 @@ export function PublicCatalogView({
               >
                 Ver catálogo completo
               </Link>
-              <a
-                href={medidaWhatsApp}
-                target={medidaWhatsApp.startsWith('http') ? '_blank' : undefined}
-                rel={
-                  medidaWhatsApp.startsWith('http')
-                    ? 'noopener noreferrer'
-                    : undefined
-                }
-                className={cn(
-                  buttonVariants({ variant: 'outline', size: 'lg' }),
-                  'h-11 w-full border-border bg-transparent px-6 text-foreground hover:border-carsa-primary/50 hover:bg-carsa-primary/10 sm:w-auto'
-                )}
-              >
-                No encuentro mi medida
-              </a>
+              {hasPopupPromotions ? (
+                <button
+                  type="button"
+                  onClick={() => promotionPopupRef.current?.open()}
+                  className={cn(
+                    buttonVariants({ variant: 'outline', size: 'lg' }),
+                    'h-11 w-full border-border bg-transparent px-6 text-foreground hover:border-carsa-primary/50 hover:bg-carsa-primary/10 sm:w-auto'
+                  )}
+                >
+                  Ver promoción
+                </button>
+              ) : null}
             </motion.div>
           </motion.div>
         </div>
@@ -544,6 +543,8 @@ export function PublicCatalogView({
           </div>
         </motion.div>
       </div>
+
+      <PromotionPopup ref={promotionPopupRef} promotions={popupPromotions} />
     </div>
   )
 }

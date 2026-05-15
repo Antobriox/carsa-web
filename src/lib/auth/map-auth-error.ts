@@ -21,5 +21,5 @@ export function mapAuthError(message: string): string {
     return 'Error de conexión. Revisa tu internet e inténtalo de nuevo.'
   }
 
-  return message || 'Algo salió mal. Inténtalo de nuevo.'
+  return 'Algo salió mal. Inténtalo de nuevo.'
 }

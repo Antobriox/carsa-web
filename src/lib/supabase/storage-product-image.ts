@@ -5,7 +5,7 @@ import { createSupabaseBrowser } from '@/lib/supabase/client'
 const BUCKET = 'product-images'
 
 export async function uploadProductImage(params: {
-  folder: 'tires' | 'batteries' | 'services'
+  folder: 'tires' | 'batteries' | 'services' | 'promotions'
   file: File
   /** Ruta relativa dentro del bucket, p. ej. `abc-uuid.jpg` */
   objectPath: string

@@ -1,3 +1,5 @@
+import type { PopupPromotion } from '@/types/promotions'
+
 /** Supabase puede inferir la relación como objeto o arreglo de una fila. */
 export type BrandNameJoin = { name: string } | { name: string }[] | null
 
@@ -61,4 +63,7 @@ export type CatalogHeroAssets = {
   heroBatteryImageUrl: string | null
 }
 
-export type CatalogPageProps = CatalogPayload & CatalogHeroAssets
+export type CatalogPageProps = CatalogPayload &
+  CatalogHeroAssets & {
+    popupPromotions: PopupPromotion[]
+  }

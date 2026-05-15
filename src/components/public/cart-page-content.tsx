@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react'
 import { Loader2, Minus, Plus, Trash2 } from 'lucide-react'
 
 import { submitCartOrder } from '@/app/carrito/actions'
+import { sanitizeUserMessage } from '@/lib/user-facing-error'
 import { buttonVariants } from '@/components/ui/button'
 import { useAuth } from '@/context/auth-context'
 import { formatMxn } from '@/lib/format'
@@ -58,7 +59,7 @@ export function CartPageContent() {
     setSubmitting(false)
 
     if (!result.ok) {
-      setError(result.message)
+      setError(sanitizeUserMessage(result.message))
       return
     }
 
@@ -151,7 +152,7 @@ export function CartPageContent() {
                   {formatMxn(line.unit_price)} c/u
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 sm:flex-col sm:items-end">
+              <div className="flex flex-wrap items-center gap-3 md:flex-col md:items-end">
                 <div
                   className={cn(
                     'inline-flex items-center rounded-xl border border-border/80 bg-background/80 p-0.5',

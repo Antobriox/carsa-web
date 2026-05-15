@@ -15,6 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { AdminNotifications } from '@/components/admin/admin-notifications'
 import { useAdminLogout } from '@/hooks/use-admin-logout'
 import { cn } from '@/lib/utils'
 
@@ -82,14 +83,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       )}
     >
       <aside className="hidden w-64 shrink-0 border-r border-border/60 bg-gradient-to-b from-card/90 via-card/50 to-background md:flex md:flex-col">
-        <div className="flex h-[3.75rem] items-center gap-3 border-b border-border/50 bg-card/40 px-4 backdrop-blur-sm">
-          <CarsaLogoMark className="shadow-inner" />
-          <div className="min-w-0">
-            <p className="truncate font-heading text-sm font-bold tracking-tight text-carsa-primary">
-              CARSA Admin
-            </p>
-            <p className="text-[0.65rem] text-muted-foreground">Panel de control</p>
+        <div className="flex h-[3.75rem] items-center justify-between gap-2 border-b border-border/50 bg-card/40 px-4 backdrop-blur-sm">
+          <div className="flex min-w-0 items-center gap-3">
+            <CarsaLogoMark variant="plain" size={10} />
+            <div className="min-w-0">
+              <p className="truncate font-heading text-sm font-bold tracking-tight text-carsa-primary">
+                CARSA Admin
+              </p>
+              <p className="text-[0.65rem] text-muted-foreground">Panel de control</p>
+            </div>
           </div>
+          <AdminNotifications />
         </div>
         <div className="flex flex-1 flex-col gap-2 p-3">
           <NavLinks />
@@ -125,7 +129,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             />
             <SheetContent side="left" className="w-[min(100%,19rem)] gap-0 border-border/60 bg-gradient-to-b from-card to-background p-0">
               <SheetHeader className="flex flex-row items-center gap-3 border-b border-border/50 bg-card/50 p-4 text-left">
-                <CarsaLogoMark size={9} className="rounded-lg [&_img]:p-1" />
+                <CarsaLogoMark variant="plain" size={9} />
                 <SheetTitle className="font-heading text-base">CARSA Admin</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-3 p-3">
@@ -161,20 +165,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               Administración
             </p>
           </div>
+          <AdminNotifications />
         </header>
 
-        <header className="hidden h-14 items-center border-b border-border/60 bg-card/25 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] backdrop-blur-sm md:flex">
-          <div className="min-w-0">
-            <p className="text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
-              Panel administrador
-            </p>
-            <h1 className="font-heading text-lg font-semibold tracking-tight text-foreground">
-              {pageTitle}
-            </h1>
-          </div>
-        </header>
-
-        <main className="relative min-w-0 flex-1 overflow-x-auto overflow-y-auto bg-gradient-to-b from-transparent via-carsa-primary/[0.02] to-transparent p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 md:p-6 md:pb-6">
+        <main className="relative min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-gradient-to-b from-transparent via-carsa-primary/[0.02] to-transparent p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:p-5 md:p-6 md:pb-6">
           <div className="mx-auto w-full min-w-0 max-w-7xl">{children}</div>
         </main>
       </div>

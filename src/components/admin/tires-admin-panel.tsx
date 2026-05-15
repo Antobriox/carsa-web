@@ -6,6 +6,7 @@ import { ImageIcon, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 
 import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
+import { AdminLabeledSelectValue } from '@/components/admin/admin-labeled-select-value'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -24,7 +25,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select'
 import {
   Table,
@@ -39,6 +39,11 @@ import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
 import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
 import { tireSchema, type TireFormValues } from '@/lib/admin/schemas'
 import { publishCatalogInventoryBroadcast } from '@/lib/catalog-inventory-broadcast'
+import { devError } from '@/lib/dev-log'
+import {
+  GENERIC_DELETE_ERROR,
+  GENERIC_LOAD_ERROR,
+} from '@/lib/user-facing-error'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { uploadProductImage } from '@/lib/supabase/storage-product-image'
 import type { AdminTire, AdminTireBrand } from '@/types/admin'
@@ -157,12 +162,12 @@ export function TiresAdminPanel() {
         .order('name'),
     ])
     if (bRes.error) {
-      setFeedback({ variant: 'error', text: bRes.error.message })
+      setFeedback({ variant: 'error', text: GENERIC_LOAD_ERROR })
     } else {
       setBrands((bRes.data ?? []) as AdminTireBrand[])
     }
     if (tRes.error) {
-      setFeedback({ variant: 'error', text: tRes.error.message })
+      setFeedback({ variant: 'error', text: GENERIC_LOAD_ERROR })
     } else {
       setTires((tRes.data ?? []) as AdminTire[])
     }
@@ -322,7 +327,7 @@ export function TiresAdminPanel() {
       closeDialog()
       await load()
     } catch (e: unknown) {
-      console.error(
+      devError(
         editing
           ? '[admin/llantas] error al editar llanta'
           : '[admin/llantas] error al crear llanta',
@@ -350,7 +355,7 @@ export function TiresAdminPanel() {
     const { error } = await supabase.from('tires').delete().eq('id', deleteTarget.id)
     setSaving(false)
     if (error) {
-      setFeedback({ variant: 'error', text: error.message })
+      setFeedback({ variant: 'error', text: GENERIC_DELETE_ERROR })
     } else {
       publishCatalogInventoryBroadcast({
         table: 'tires',
@@ -508,7 +513,7 @@ export function TiresAdminPanel() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-2xl">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),42rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar llanta' : 'Nueva llanta'}</DialogTitle>
             <DialogDescription>
@@ -529,7 +534,11 @@ export function TiresAdminPanel() {
                     onValueChange={(v) => field.onChange(v ?? '')}
                   >
                     <SelectTrigger id="t-brand" size="default" className="h-9 w-full min-w-0">
-                      <SelectValue placeholder="Selecciona marca" />
+                      <AdminLabeledSelectValue
+                        value={field.value}
+                        items={brandItems}
+                        placeholder="Selecciona marca"
+                      />
                     </SelectTrigger>
                     <SelectContent className="z-[200]">
                       {brands.map((b) => (
@@ -547,7 +556,11 @@ export function TiresAdminPanel() {
             <div className="grid gap-2.5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="t-code">Código proveedor</Label>
-                <Input id="t-code" placeholder="Opcional" {...register('supplier_code')} />
+                <Input
+                  id="t-code"
+                  placeholder="Código del proveedor (opcional)"
+                  {...register('supplier_code')}
+                />
                 <FieldError message={errors.supplier_code?.message} />
               </div>
               <div className="space-y-2">
@@ -581,7 +594,11 @@ export function TiresAdminPanel() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="t-model">Modelo</Label>
-                <Input id="t-model" placeholder="Opcional" {...register('model')} />
+                <Input
+                  id="t-model"
+                  placeholder="Modelo (opcional)"
+                  {...register('model')}
+                />
                 <FieldError message={errors.model?.message} />
               </div>
             </div>
@@ -623,7 +640,7 @@ export function TiresAdminPanel() {
                 <Textarea
                   id="t-desc"
                   rows={2}
-                  placeholder="Opcional"
+                  placeholder="Detalle adicional para el catálogo"
                   {...register('description')}
                 />
                 <FieldError message={errors.description?.message} />
@@ -682,7 +699,7 @@ export function TiresAdminPanel() {
       </Dialog>
 
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),28rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>¿Eliminar llanta?</DialogTitle>
             <DialogDescription>

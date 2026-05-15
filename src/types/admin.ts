@@ -72,3 +72,13 @@ export type AdminSaleRow = Record<string, unknown> & {
   total?: number
   created_at?: string
 }
+
+export type AdminPromotion = {
+  id: string
+  title: string | null
+  image_url: string | null
+  is_active: boolean
+  is_popup: boolean
+  created_at?: string
+  updated_at?: string
+}

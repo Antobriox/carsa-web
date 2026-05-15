@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Battery,
   CircleDollarSign,
+  Images,
   LayoutDashboard,
   Package,
   ShoppingBag,
@@ -21,6 +22,7 @@ export const adminNavItems: AdminNavItem[] = [
   { href: '/admin/baterias', label: 'Baterías', icon: Battery },
   { href: '/admin/servicios', label: 'Servicios', icon: Wrench },
   { href: '/admin/marcas', label: 'Marcas', icon: Tag },
+  { href: '/admin/promociones', label: 'Promociones', icon: Images },
   { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingBag },
   { href: '/admin/ventas', label: 'Ventas', icon: CircleDollarSign },
 ]

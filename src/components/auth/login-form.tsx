@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { mapAuthError } from '@/lib/auth/map-auth-error'
 import { safeCustomerPostLoginPath } from '@/lib/auth/safe-redirect'
 import { loginSchema, type LoginFormValues } from '@/lib/auth/schemas'
+import { devError } from '@/lib/dev-log'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import type { Profile } from '@/types/auth'
 import { cn } from '@/lib/utils'
@@ -54,7 +55,7 @@ export function LoginForm() {
       })
 
       if (signInError) {
-        console.error('[CARSA login] signInWithPassword', signInError)
+        devError('[CARSA login] signInWithPassword', signInError)
         setSubmitError(mapAuthError(signInError.message))
         return
       }
@@ -65,7 +66,7 @@ export function LoginForm() {
       } = await supabase.auth.getUser()
 
       if (userError) {
-        console.error('[CARSA login] getUser', userError)
+        devError('[CARSA login] getUser', userError)
         setSubmitError(
           'No se pudo obtener tu sesión. Cierra sesión en otro dispositivo e inténtalo de nuevo.'
         )
@@ -90,10 +91,7 @@ export function LoginForm() {
         .single()
 
       if (profileError) {
-        console.error(
-          'profileError',
-          JSON.stringify(profileError, null, 2)
-        )
+        devError('[CARSA login] profile', profileError)
         setSubmitError(
           'No pudimos cargar tu perfil. Inténtalo de nuevo o contacta a CARSA si el problema continúa.'
         )
@@ -124,7 +122,7 @@ export function LoginForm() {
         router.refresh()
       })
     } catch (err) {
-      console.error('[CARSA login] error inesperado', err)
+      devError('[CARSA login] error inesperado', err)
       setSubmitError(
         'Ocurrió un error inesperado. Inténtalo de nuevo en unos segundos.'
       )

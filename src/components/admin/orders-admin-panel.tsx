@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Eye } from 'lucide-react'
 
 import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
+import { AdminLabeledSelectValue } from '@/components/admin/admin-labeled-select-value'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +22,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select'
 import {
   Table,
@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/table'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
 import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
+import { adminDialogWide } from '@/lib/admin-dialog-classes'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 
 type OrderStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
@@ -106,6 +107,11 @@ function StatusBadge({ status }: { status: OrderStatus }) {
     </Badge>
   )
 }
+
+const statusFilterItems = [
+  { value: 'all', label: 'Todos' },
+  ...statusOptions,
+]
 
 export function OrdersAdminPanel() {
   const supabase = useMemo(() => createSupabaseBrowser(), [])
@@ -261,7 +267,7 @@ export function OrdersAdminPanel() {
         onDismiss={dismissFeedback}
       />
 
-      <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 sm:grid-cols-[1fr_220px]">
+      <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 md:grid-cols-[1fr_220px]">
         <div className="space-y-2">
           <Label htmlFor="orders-search">Buscar por nombre o teléfono</Label>
           <Input
@@ -274,15 +280,16 @@ export function OrdersAdminPanel() {
         <div className="space-y-2">
           <Label htmlFor="orders-status">Filtrar por estado</Label>
           <Select
-            items={[
-              { value: 'all', label: 'Todos' },
-              ...statusOptions.map((s) => ({ value: s.value, label: s.label })),
-            ]}
+            items={statusFilterItems}
             value={statusFilter}
             onValueChange={(value) => setStatusFilter((value as typeof statusFilter) ?? 'all')}
           >
             <SelectTrigger id="orders-status" className="h-9 w-full min-w-0">
-              <SelectValue placeholder="Estado" />
+              <AdminLabeledSelectValue
+                value={statusFilter}
+                items={statusFilterItems}
+                placeholder="Estado"
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -365,8 +372,8 @@ export function OrdersAdminPanel() {
       </div>
 
       <Dialog open={!!selectedOrder} onOpenChange={(open) => (!open ? closeDetail() : null)}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-4xl">
-          <DialogHeader>
+        <DialogContent className={adminDialogWide}>
+          <DialogHeader className="shrink-0 px-4 pt-4 sm:px-6">
             <DialogTitle>Detalle del pedido</DialogTitle>
             <DialogDescription>
               Revisa la información del cliente, los productos y el estado del pedido.
@@ -374,7 +381,7 @@ export function OrdersAdminPanel() {
           </DialogHeader>
 
           {selectedOrder ? (
-            <div className="space-y-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-4 sm:px-6">
               <div className="grid gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Cliente</p>
@@ -396,7 +403,7 @@ export function OrdersAdminPanel() {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-[260px_1fr]">
+              <div className="grid gap-3 md:grid-cols-[260px_1fr]">
                 <div className="space-y-2">
                   <Label htmlFor="order-status">Estado</Label>
                   <Select
@@ -408,7 +415,11 @@ export function OrdersAdminPanel() {
                     disabled={updatingStatus}
                   >
                     <SelectTrigger id="order-status" className="h-9 w-full min-w-0">
-                      <SelectValue placeholder="Selecciona estado" />
+                      <AdminLabeledSelectValue
+                        value={selectedOrder.status}
+                        items={statusOptions}
+                        placeholder="Selecciona estado"
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {statusOptions.map((status) => (
@@ -427,7 +438,7 @@ export function OrdersAdminPanel() {
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-lg border border-border/60">
+              <div className="table-scroll rounded-lg border border-border/60">
                 {loadingDetail ? (
                   <div className="flex items-center justify-center py-12 text-muted-foreground">
                     <TireLoadingIcon className="size-7" aria-label="Cargando detalle del pedido" />
@@ -446,7 +457,7 @@ export function OrdersAdminPanel() {
                       {detailItems.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            Este pedido no tiene items registrados.
+                            Este pedido no tiene productos registrados.
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -478,7 +489,7 @@ export function OrdersAdminPanel() {
             </div>
           ) : null}
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t border-border/60 px-4 py-3 sm:px-6">
             <Button type="button" variant="outline" onClick={closeDetail}>
               Cerrar
             </Button>

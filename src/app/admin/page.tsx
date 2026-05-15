@@ -80,10 +80,7 @@ export default async function AdminDashboardPage() {
       {/* Encabezado */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-carsa-primary/90">
-            Panel administrador
-          </p>
-          <h2 className="mt-1 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Dashboard
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
@@ -171,7 +168,7 @@ export default async function AdminDashboardPage() {
                 Ventas con fecha de registro en el mes actual.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-black/20 p-4 backdrop-blur-sm">
                 <p className="text-xs text-muted-foreground">Ventas registradas</p>
                 <p className="mt-1 font-heading text-2xl font-bold tabular-nums text-foreground">

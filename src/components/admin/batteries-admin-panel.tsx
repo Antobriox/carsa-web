@@ -6,6 +6,7 @@ import { ImageIcon, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 
 import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
+import { AdminLabeledSelectValue } from '@/components/admin/admin-labeled-select-value'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -24,7 +25,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select'
 import {
   Table,
@@ -39,6 +39,7 @@ import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
 import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
 import { batterySchema, type BatteryFormValues } from '@/lib/admin/schemas'
 import { publishCatalogInventoryBroadcast } from '@/lib/catalog-inventory-broadcast'
+import { devError } from '@/lib/dev-log'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { uploadProductImage } from '@/lib/supabase/storage-product-image'
 import type { AdminBattery, AdminBatteryBrand } from '@/types/admin'
@@ -338,7 +339,7 @@ export function BatteriesAdminPanel() {
       closeDialog()
       await load()
     } catch (e: unknown) {
-      console.error(
+      devError(
         editing
           ? '[admin/baterias] error al editar batería'
           : '[admin/baterias] error al crear batería',
@@ -525,7 +526,7 @@ export function BatteriesAdminPanel() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-2xl">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),42rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar batería' : 'Nueva batería'}</DialogTitle>
             <DialogDescription>
@@ -546,7 +547,11 @@ export function BatteriesAdminPanel() {
                     onValueChange={(v) => field.onChange(v ?? '')}
                   >
                     <SelectTrigger id="b-brand" size="default" className="h-9 w-full min-w-0">
-                      <SelectValue placeholder="Selecciona marca" />
+                      <AdminLabeledSelectValue
+                        value={field.value}
+                        items={brandItems}
+                        placeholder="Selecciona marca"
+                      />
                     </SelectTrigger>
                     <SelectContent className="z-[200]">
                       {brands.map((b) => (
@@ -564,7 +569,11 @@ export function BatteriesAdminPanel() {
             <div className="grid gap-2.5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="b-code">Código proveedor</Label>
-                <Input id="b-code" placeholder="Opcional" {...register('supplier_code')} />
+                <Input
+                  id="b-code"
+                  placeholder="Código del proveedor (opcional)"
+                  {...register('supplier_code')}
+                />
                 <FieldError message={errors.supplier_code?.message} />
               </div>
               <div className="space-y-2">
@@ -573,7 +582,7 @@ export function BatteriesAdminPanel() {
                   id="b-warranty"
                   type="number"
                   min={0}
-                  placeholder="Opcional"
+                  placeholder="Meses de garantía"
                   value={warrantyMonths ?? ''}
                   onChange={(e) => {
                     const raw = e.target.value
@@ -602,12 +611,12 @@ export function BatteriesAdminPanel() {
             <div className="grid gap-2.5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="b-model">Modelo</Label>
-                <Input id="b-model" placeholder="Opcional" {...register('model')} />
+                <Input id="b-model" placeholder="Modelo (opcional)" {...register('model')} />
                 <FieldError message={errors.model?.message} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="b-amp">Amperaje</Label>
-                <Input id="b-amp" placeholder="Opcional" {...register('amperage')} />
+                <Input id="b-amp" placeholder="Ej. 60 Ah" {...register('amperage')} />
                 <FieldError message={errors.amperage?.message} />
               </div>
             </div>
@@ -615,12 +624,12 @@ export function BatteriesAdminPanel() {
             <div className="grid gap-2.5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="b-v">Voltaje</Label>
-                <Input id="b-v" placeholder="Opcional" {...register('voltage')} />
+                <Input id="b-v" placeholder="Ej. 12 V" {...register('voltage')} />
                 <FieldError message={errors.voltage?.message} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="b-pol">Polaridad</Label>
-                <Input id="b-pol" placeholder="Opcional" {...register('polarity')} />
+                <Input id="b-pol" placeholder="Ej. positivo izquierdo" {...register('polarity')} />
                 <FieldError message={errors.polarity?.message} />
               </div>
             </div>
@@ -721,7 +730,7 @@ export function BatteriesAdminPanel() {
       </Dialog>
 
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <DialogContent className="border-border/70 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[min(92dvh,720px)] w-[min(calc(100vw-1rem),28rem)] max-w-[calc(100vw-1rem)] overflow-y-auto border-border/70 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>¿Eliminar batería?</DialogTitle>
             <DialogDescription>

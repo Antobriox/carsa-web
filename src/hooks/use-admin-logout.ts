@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useRef, useState } from 'react'
 
 import { useAuth } from '@/context/auth-context'
+import { devError } from '@/lib/dev-log'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { useCartStore } from '@/stores/cart-store'
 
@@ -20,13 +21,13 @@ export function useAdminLogout() {
     setBusy(true)
     try {
       const { error } = await supabase.auth.signOut({ scope: 'local' })
-      if (error) console.error('[CARSA logout]', error)
+      if (error) devError('[CARSA logout]', error)
       clearClientSession()
       useCartStore.getState().clearCart()
       router.replace('/')
       router.refresh()
     } catch (e) {
-      console.error('[CARSA logout]', e)
+      devError('[CARSA logout]', e)
       clearClientSession()
       useCartStore.getState().clearCart()
       router.replace('/')

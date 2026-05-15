@@ -47,7 +47,9 @@ export function AuthPageShell({
           </motion.div>
         </div>
       </main>
-      <SiteFooter />
+      <div className="hidden md:block">
+        <SiteFooter />
+      </div>
       <WhatsAppFloatingButton />
     </div>
   )

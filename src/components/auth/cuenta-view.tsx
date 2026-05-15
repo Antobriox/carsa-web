@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useAuth } from '@/context/auth-context'
+import { devError } from '@/lib/dev-log'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import type { Profile } from '@/types/auth'
 import { cn } from '@/lib/utils'
@@ -53,7 +54,7 @@ export function CuentaView({
     try {
       const { error } = await supabase.auth.signOut({ scope: 'local' })
       if (error) {
-        console.error('[CARSA logout] error', error)
+        devError('[CARSA logout] error', error)
         setSignOutError(
           'No se pudo cerrar sesión del todo. Si sigues viendo tu cuenta, recarga la página.'
         )
@@ -64,7 +65,7 @@ export function CuentaView({
       router.replace('/')
       router.refresh()
     } catch (error) {
-      console.error('[CARSA logout] unexpected error', error)
+      devError('[CARSA logout] unexpected error', error)
       setSignOutError(
         'Ocurrió un error al cerrar sesión. Se actualizará la página.'
       )
@@ -121,9 +122,9 @@ export function CuentaView({
               <CardDescription>Información de contacto y rol</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between gap-4 border-b border-border/50 py-2">
+              <div className="flex flex-col gap-1 border-b border-border/50 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <span className="text-muted-foreground">Nombre</span>
-                <span className="text-right font-medium text-foreground">
+                <span className="font-medium text-foreground sm:text-right">
                   {profile.full_name ?? '—'}
                 </span>
               </div>
