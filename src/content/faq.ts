@@ -122,7 +122,7 @@ export const faqItems: FaqItem[] = [
     id: 'ubicacion',
     question: '¿Dónde está ubicado CARSA?',
     answer:
-      'CARSA está ubicado en Avenida Metropolitana, Montecristi, Manabí, Ecuador. Puedes ver la ubicación en el mapa del sitio y abrirla directamente en Google Maps.',
+      'CARSA está ubicado en Avenida Metropolitana, Portoviejo, Manabí, Ecuador. Puedes ver la ubicación en el mapa del sitio y abrirla directamente en Google Maps.',
     showMapsLink: true,
   },
   {

@@ -1,15 +1,27 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useMemo, useRef, useState } from 'react'
-import { Loader2, LogOut, Menu, Shield, ShoppingCart } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Battery,
+  Circle,
+  Loader2,
+  LogOut,
+  MapPin,
+  Menu,
+  Shield,
+  ShoppingCart,
+  Wrench,
+  X,
+} from 'lucide-react'
 
 import { UserAccountAvatar } from '@/components/auth/user-account-avatar'
 import { CarsaLogoMark } from '@/components/branding/carsa-logo-mark'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -17,16 +29,25 @@ import {
 } from '@/components/ui/sheet'
 import { useAuth } from '@/context/auth-context'
 import { devError } from '@/lib/dev-log'
+import { getUserInitials } from '@/lib/user-initials'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { useCartStore } from '@/stores/cart-store'
 import { cn } from '@/lib/utils'
 
 const nav = [
-  { href: '/llantas', label: 'Llantas' },
-  { href: '/baterias', label: 'Baterías' },
-  { href: '/#servicios', label: 'Servicios' },
-  { href: '/#contacto', label: 'Contacto' },
+  { href: '/llantas', label: 'Llantas', icon: Circle },
+  { href: '/baterias', label: 'Baterías', icon: Battery },
+  { href: '/#servicios', label: 'Servicios', icon: Wrench },
+  { href: '/#contacto', label: 'Contacto', icon: MapPin },
 ] as const
+
+function isNavItemActive(href: string, pathname: string, hash: string) {
+  if (href.startsWith('/#')) {
+    const target = href.slice(1)
+    return pathname === '/' && hash === target
+  }
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
 
 function AuthSkeleton() {
   return (
@@ -39,6 +60,15 @@ function AuthSkeleton() {
 
 export function SiteHeader() {
   const router = useRouter()
+  const pathname = usePathname()
+  const [locationHash, setLocationHash] = useState('')
+
+  useEffect(() => {
+    const syncHash = () => setLocationHash(window.location.hash)
+    syncHash()
+    window.addEventListener('hashchange', syncHash)
+    return () => window.removeEventListener('hashchange', syncHash)
+  }, [pathname])
   const itemCount = useCartStore((s) =>
     s.items.reduce((acc, i) => acc + i.quantity, 0)
   )
@@ -161,18 +191,18 @@ export function SiteHeader() {
   )
 
   const authMobile = loading ? (
-    <div className="flex flex-col gap-2 pt-2">
-      <div className="h-10 w-full animate-pulse rounded-lg bg-muted/80" />
-      <div className="h-10 w-full animate-pulse rounded-lg bg-muted/80" />
+    <div className="flex flex-col gap-2" aria-busy="true">
+      <div className="h-11 w-full animate-pulse rounded-xl bg-muted/60" />
+      <div className="h-11 w-full animate-pulse rounded-xl bg-muted/60" />
     </div>
   ) : !user ? (
-    <div className="flex flex-col gap-2 pt-2">
+    <div className="flex flex-col gap-2">
       <Link
         href="/registro"
         onClick={closeMobile}
         className={cn(
-          buttonVariants({ variant: 'outline', size: 'lg' }),
-          'w-full justify-center border-border/80'
+          buttonVariants({ variant: 'outline', size: 'default' }),
+          'h-11 w-full justify-center rounded-xl border-border/70 bg-muted/15 font-semibold shadow-sm shadow-black/20'
         )}
       >
         Crear cuenta
@@ -181,41 +211,55 @@ export function SiteHeader() {
         href="/login"
         onClick={closeMobile}
         className={cn(
-          buttonVariants({ size: 'lg' }),
-          'w-full justify-center bg-carsa-primary text-white hover:bg-carsa-primary-hover'
+          buttonVariants({ size: 'default' }),
+          'h-11 w-full justify-center rounded-xl bg-carsa-primary font-semibold text-white shadow-md shadow-carsa-primary/30 ring-1 ring-white/10 hover:bg-carsa-primary-hover'
         )}
       >
         Iniciar sesión
       </Link>
     </div>
   ) : (
-    <div className="flex flex-col gap-2 pt-2">
+    <div className="flex flex-col gap-2">
+      <Link
+        href="/cuenta"
+        onClick={closeMobile}
+        className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/15 p-3 transition hover:border-carsa-primary/30 hover:bg-carsa-primary/5"
+      >
+        <span
+          className={cn(
+            'inline-flex size-10 shrink-0 items-center justify-center rounded-full',
+            'bg-carsa-primary/20 text-sm font-semibold tracking-tight text-carsa-primary',
+            'ring-2 ring-carsa-primary/25'
+          )}
+          aria-hidden
+        >
+          {getUserInitials(profile?.full_name, user.email)}
+        </span>
+        <div className="min-w-0 flex-1 text-left">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {profile?.full_name?.trim() || 'Mi cuenta'}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+        </div>
+      </Link>
       {isAdmin ? (
         <Link
           href="/admin"
           onClick={closeMobile}
           className={cn(
-            buttonVariants({ variant: 'outline', size: 'lg' }),
-            'w-full justify-center border-carsa-primary/40 bg-carsa-primary/10 text-carsa-primary'
+            buttonVariants({ variant: 'outline', size: 'default' }),
+            'h-11 w-full justify-center gap-2 rounded-xl border-carsa-primary/40 bg-carsa-primary/10 font-semibold text-carsa-primary'
           )}
         >
-          <Shield className="mr-2 size-4" aria-hidden />
-          Admin
+          <Shield className="size-4" aria-hidden />
+          Panel admin
         </Link>
       ) : null}
-      <div className="flex justify-center py-1">
-        <UserAccountAvatar
-          fullName={profile?.full_name}
-          email={user.email}
-          size="lg"
-          onClick={closeMobile}
-        />
-      </div>
       <Button
         type="button"
-        variant="outline"
-        size="lg"
-        className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
+        variant="ghost"
+        size="default"
+        className="h-11 w-full justify-center gap-2 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
         onClick={handleSignOut}
         disabled={signingOut}
       >
@@ -223,7 +267,7 @@ export function SiteHeader() {
           <Loader2 className="size-4 animate-spin" />
         ) : (
           <>
-            <LogOut className="mr-2 size-4" aria-hidden />
+            <LogOut className="size-4" aria-hidden />
             Cerrar sesión
           </>
         )}
@@ -256,26 +300,100 @@ export function SiteHeader() {
                 </Button>
               }
             />
-            <SheetContent side="right" className="w-[min(100%,20rem)] gap-0 p-0">
-              <SheetHeader className="border-b border-border/60 p-4 text-left">
-                <SheetTitle className="font-heading text-lg">Menú</SheetTitle>
+            <SheetContent
+              side="left"
+              showCloseButton={false}
+              className="w-[min(100%,19.5rem)] max-w-[19.5rem] gap-0 border-border/50 bg-gradient-to-b from-card via-background to-background p-0 shadow-2xl shadow-black/50"
+            >
+              <SheetHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/50 bg-card/40 px-4 py-3.5 text-left">
+                <Link
+                  href="/"
+                  onClick={closeMobile}
+                  className="group flex min-w-0 items-center gap-2.5"
+                >
+                  <CarsaLogoMark
+                    size={9}
+                    className="bg-carsa-primary/10 ring-carsa-primary/25 transition group-hover:bg-carsa-primary/18"
+                  />
+                  <SheetTitle className="font-heading text-lg font-bold tracking-tight text-carsa-primary">
+                    CARSA
+                  </SheetTitle>
+                </Link>
+                <SheetClose
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-9 shrink-0 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      aria-label="Cerrar menú"
+                    />
+                  }
+                >
+                  <X className="size-5" aria-hidden />
+                </SheetClose>
               </SheetHeader>
-              <nav className="flex flex-col gap-1 p-3" aria-label="Principal móvil">
-                {nav.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMobile}
-                    className={cn(
-                      buttonVariants({ variant: 'ghost', size: 'lg' }),
-                      'justify-start text-carsa-neutral hover:text-foreground'
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-              <div className="border-t border-border/60 p-3">{authMobile}</div>
+
+              <div className="flex flex-col gap-4 px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <nav className="flex flex-col gap-1" aria-label="Principal móvil">
+                  {nav.map((item) => {
+                    const Icon = item.icon
+                    const active = isNavItemActive(
+                      item.href,
+                      pathname,
+                      locationHash
+                    )
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={closeMobile}
+                        aria-current={active ? 'page' : undefined}
+                        className={cn(
+                          'flex h-11 items-center gap-3 rounded-xl px-3 text-[0.9375rem] font-medium transition duration-200',
+                          active
+                            ? 'bg-carsa-primary/15 text-foreground ring-1 ring-carsa-primary/25'
+                            : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'flex size-8 shrink-0 items-center justify-center rounded-lg',
+                            active
+                              ? 'bg-carsa-primary/20 text-carsa-primary'
+                              : 'bg-muted/30 text-muted-foreground'
+                          )}
+                          aria-hidden
+                        >
+                          <Icon className="size-4" strokeWidth={2} />
+                        </span>
+                        {item.label}
+                      </Link>
+                    )
+                  })}
+                </nav>
+
+                <Link
+                  href="/carrito"
+                  onClick={closeMobile}
+                  className={cn(
+                    'flex h-11 items-center gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-3 text-[0.9375rem] font-medium text-foreground shadow-inner shadow-black/25 ring-1 ring-white/[0.05] transition hover:border-carsa-primary/40 hover:text-carsa-primary'
+                  )}
+                >
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-carsa-primary/15 text-carsa-primary">
+                    <ShoppingCart className="size-4" aria-hidden />
+                  </span>
+                  <span className="flex-1">Carrito</span>
+                  {itemCount > 0 ? (
+                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-carsa-primary px-1.5 text-xs font-bold text-white">
+                      {itemCount > 99 ? '99+' : itemCount}
+                    </span>
+                  ) : null}
+                </Link>
+
+                <div className="h-px bg-gradient-to-r from-transparent via-border/70 to-transparent" />
+
+                {authMobile}
+              </div>
             </SheetContent>
           </Sheet>
 

@@ -10,8 +10,6 @@ import { cn } from '@/lib/utils'
 import { buildWhatsAppUrl } from '@/lib/whatsapp-public'
 
 const BOUNCE_DURATION = 1.55
-/** Solapamiento muñeco ↔ burbuja: más negativo = más abajo (toca). Prueba -mb-2 … -mb-4. */
-const MASCOT_BUBBLE_OVERLAP = '-mb-3'
 
 function getWhatsAppHref(): { href: string; label: string } {
   const url =
@@ -51,13 +49,10 @@ export function WhatsAppFloatingButton() {
       >
         <motion.div
           aria-hidden
-          className={cn(
-            'relative z-10 hidden motion-reduce:animate-none min-[480px]:block',
-            MASCOT_BUBBLE_OVERLAP
-          )}
+          className="relative z-10 -mb-2 motion-reduce:animate-none sm:-mb-3"
           style={{ transformOrigin: 'bottom center' }}
           animate={{
-            y: [0, -26, 2, -9, 0],
+            y: [0, -20, 2, -8, 0],
             scaleY: [1, 1.04, 0.86, 0.95, 1],
             scaleX: [1, 0.97, 1.1, 1.02, 1],
           }}
@@ -70,8 +65,13 @@ export function WhatsAppFloatingButton() {
         >
           <CarsaLogoMark
             variant="plain"
+            size={14}
+            className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.55)] sm:hidden"
+          />
+          <CarsaLogoMark
+            variant="plain"
             size={20}
-            className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.55)]"
+            className="hidden drop-shadow-[0_4px_12px_rgba(0,0,0,0.55)] sm:block"
           />
         </motion.div>
 
