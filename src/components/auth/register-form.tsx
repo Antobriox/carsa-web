@@ -43,6 +43,12 @@ export function RegisterForm() {
     setSubmitError(null)
     setSuccess(false)
 
+    const phone = values.phone.trim()
+    if (!phone) {
+      setSubmitError('El número de WhatsApp es obligatorio para crear tu cuenta.')
+      return
+    }
+
     const supabase = createSupabaseBrowser()
     const origin =
       typeof window !== 'undefined' ? window.location.origin : ''
@@ -54,7 +60,7 @@ export function RegisterForm() {
         emailRedirectTo: `${origin}/auth/callback?next=/cuenta`,
         data: {
           full_name: values.full_name.trim(),
-          phone: values.phone.trim(),
+          phone,
         },
       },
     })
@@ -131,17 +137,26 @@ export function RegisterForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono</Label>
+            <Label htmlFor="phone">
+              WhatsApp / teléfono <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="phone"
               type="tel"
               autoComplete="tel"
+              required
+              placeholder="Ej. 098 765 4321"
               className={cn(errors.phone && 'border-destructive')}
               {...register('phone')}
             />
             {errors.phone ? (
               <p className="text-xs text-destructive">{errors.phone.message}</p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Obligatorio: CARSA te contactará por este número para confirmar
+                pedidos y disponibilidad.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

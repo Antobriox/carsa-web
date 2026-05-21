@@ -1,7 +1,9 @@
-import { MapPin, MessageCircle } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 
 import { BusinessHoursBlock } from '@/components/public/business-hours-block'
+import { LocationMapBlock } from '@/components/public/location-map-block'
 import { buttonVariants } from '@/components/ui/button'
+import { CARSA_GOOGLE_MAPS_URL } from '@/lib/carsa-location'
 import {
   buildWhatsAppUrl,
   formatWhatsAppForDisplay,
@@ -14,7 +16,7 @@ const footerLinkClass =
 
 export function SiteFooter() {
   const digits = getWhatsAppDigits()
-  const phoneLabel = formatWhatsAppForDisplay(digits) || '+593 980 822 825'
+  const phoneLabel = formatWhatsAppForDisplay(digits) || '+593 98 082 2825'
   const whatsappHref =
     buildWhatsAppUrl(
       'Hola CARSA, quiero información sobre llantas, baterías o servicios.'
@@ -59,14 +61,14 @@ export function SiteFooter() {
             </p>
             <ul className="mt-4 space-y-2.5">
               <li>
-                <span className="text-sm text-carsa-neutral/80">
-                  Términos y condiciones — próximamente
-                </span>
+                <a href="/terminos-y-condiciones" className={footerLinkClass}>
+                  Términos y condiciones
+                </a>
               </li>
               <li>
-                <span className="text-sm text-carsa-neutral/80">
-                  Política de privacidad — próximamente
-                </span>
+                <a href="/politica-de-privacidad" className={footerLinkClass}>
+                  Política de privacidad
+                </a>
               </li>
             </ul>
           </div>
@@ -77,8 +79,13 @@ export function SiteFooter() {
             </p>
             <ul className="mt-4 space-y-2.5">
               <li>
-                <a href="#contacto" className={footerLinkClass}>
-                  Sucursales
+                <a
+                  href={CARSA_GOOGLE_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={footerLinkClass}
+                >
+                  Ver ubicación
                 </a>
               </li>
               <li>
@@ -95,7 +102,7 @@ export function SiteFooter() {
             </p>
             <ul className="mt-4 space-y-2.5">
               <li>
-                <a href={whatsappHref} className={footerLinkClass}>
+                <a href="/preguntas-frecuentes" className={footerLinkClass}>
                   Preguntas frecuentes
                 </a>
               </li>
@@ -104,20 +111,7 @@ export function SiteFooter() {
         </div>
 
         <div className="grid gap-10 border-t border-carsa-tertiary/20 pt-10 lg:grid-cols-2 lg:gap-12">
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 text-carsa-neutral">
-              <MapPin
-                className="mt-0.5 size-4 shrink-0 text-carsa-primary"
-                aria-hidden
-              />
-              <div>
-                <p className="font-medium text-carsa-canvas">Ubicación</p>
-                <p className="mt-1 text-carsa-neutral">
-                  Avenida Metropolitana, Portoviejo, Manabí, Ecuador
-                </p>
-              </div>
-            </div>
-          </div>
+          <LocationMapBlock />
 
           <div className="space-y-3">
             <p className="font-medium text-carsa-canvas">Horario</p>

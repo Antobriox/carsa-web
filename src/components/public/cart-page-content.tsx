@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react'
 import { Loader2, Minus, Plus, Trash2 } from 'lucide-react'
 
 import { submitCartOrder } from '@/app/carrito/actions'
+import { ProfilePhoneForm } from '@/components/auth/profile-phone-form'
 import { sanitizeUserMessage } from '@/lib/user-facing-error'
 import { buttonVariants } from '@/components/ui/button'
 import { useAuth } from '@/context/auth-context'
@@ -44,7 +45,11 @@ export function CartPageContent() {
   const phoneMissing = !profile?.phone?.trim()
 
   const handleConfirm = async () => {
-    if (items.length === 0 || phoneMissing) return
+    if (items.length === 0) return
+    if (phoneMissing) {
+      setError('Necesitamos tu número de WhatsApp para confirmar el pedido.')
+      return
+    }
     setSubmitting(true)
     setError(null)
 
@@ -104,16 +109,25 @@ export function CartPageContent() {
       {phoneMissing ? (
         <div
           role="status"
-          className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          className="space-y-4 rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-4 text-sm text-amber-100"
         >
           <p>
-            Agrega un{' '}
-            <span className="font-medium text-foreground">teléfono</span> en{' '}
-            <Link href="/cuenta" className="font-medium text-carsa-primary underline">
+            Necesitamos tu número de WhatsApp para confirmar el pedido. Complétalo
+            aquí o en{' '}
+            <Link
+              href="/cuenta?completar=whatsapp"
+              className="font-medium text-carsa-primary underline"
+            >
               Mi cuenta
-            </Link>{' '}
-            para poder enviar tu pedido.
+            </Link>
+            .
           </p>
+          <ProfilePhoneForm
+            initialPhone={profile?.phone}
+            compact
+            submitLabel="Guardar y continuar"
+            onSaved={() => setError(null)}
+          />
         </div>
       ) : null}
 

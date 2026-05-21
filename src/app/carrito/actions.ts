@@ -3,6 +3,10 @@
 import { z } from 'zod'
 
 import { getSessionWithProfile, hasRole } from '@/lib/auth/session'
+import {
+  formatTireDisplayTitle,
+  tireToDisplayInput,
+} from '@/lib/catalog-tire-display'
 import { sendNewOrderPush } from '@/lib/push/send-new-order'
 import { createClient } from '@/lib/supabase/server'
 
@@ -67,7 +71,7 @@ export async function submitCartOrder(
     return {
       ok: false,
       message:
-        'Agrega un teléfono en Mi cuenta para que podamos contactarte y confirmar tu pedido.',
+        'Necesitamos tu número de WhatsApp para confirmar el pedido.',
     }
   }
 
@@ -93,7 +97,19 @@ export async function submitCartOrder(
     if (line.item_type === 'tire') {
       const { data, error } = await supabase
         .from('tires')
-        .select('id, name, price, stock, is_active')
+        .select(
+          `
+          id,
+          name,
+          price,
+          stock,
+          is_active,
+          size,
+          rim,
+          model,
+          tire_brands ( name )
+        `
+        )
         .eq('id', line.item_id)
         .maybeSingle()
 
@@ -115,7 +131,21 @@ export async function submitCartOrder(
       }
 
       const unit = round2(num(data.price))
-      const name = typeof data.name === 'string' ? data.name : 'Llanta'
+      const name =
+        typeof data.name === 'string' && data.size
+          ? formatTireDisplayTitle(
+              tireToDisplayInput({
+                name: data.name,
+                size: String(data.size),
+                rim: data.rim ?? 0,
+                model:
+                  typeof data.model === 'string' ? data.model : null,
+                tire_brands: data.tire_brands,
+              })
+            )
+          : typeof data.name === 'string'
+            ? data.name
+            : 'Llanta'
       resolved.push({
         item_type: 'tire',
         item_id: data.id as string,
@@ -251,6 +281,7 @@ export async function submitCartOrder(
     await sendNewOrderPush({
       order_id: orderId,
       customer_name: customerName,
+      customer_phone: phone,
       total,
     })
   } catch {

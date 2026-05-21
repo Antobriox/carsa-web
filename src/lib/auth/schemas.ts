@@ -1,5 +1,17 @@
 import { z } from 'zod'
 
+/** Teléfono / WhatsApp del cliente (registro y perfil). */
+export const customerPhoneSchema = z
+  .string()
+  .trim()
+  .min(1, 'El número de WhatsApp es obligatorio')
+  .min(8, 'Introduce un número válido con código de área')
+  .max(20, 'Máximo 20 caracteres')
+  .regex(
+    /^[\d\s+\-()]+$/,
+    'Usa solo números y símbolos habituales de teléfono'
+  )
+
 const passwordField = z
   .string()
   .min(8, 'Mínimo 8 caracteres')
@@ -19,10 +31,7 @@ export const registerSchema = z
       .string()
       .min(2, 'Mínimo 2 caracteres')
       .max(120, 'Máximo 120 caracteres'),
-    phone: z
-      .string()
-      .min(8, 'Teléfono no válido')
-      .max(20, 'Máximo 20 caracteres'),
+    phone: customerPhoneSchema,
     email: z.string().email('Introduce un correo válido'),
     password: passwordField,
     confirmPassword: z.string(),
@@ -43,3 +52,9 @@ export const recoverSchema = z.object({
 })
 
 export type RecoverFormValues = z.infer<typeof recoverSchema>
+
+export const profilePhoneSchema = z.object({
+  phone: customerPhoneSchema,
+})
+
+export type ProfilePhoneFormValues = z.infer<typeof profilePhoneSchema>

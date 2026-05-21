@@ -68,9 +68,9 @@ export default async function LlantasPage({
                 Catálogo de llantas
               </h1>
               <p className="mt-2 max-w-2xl text-muted-foreground">
-                Todas las llantas activas del catálogo, con marca y precio. Usa
-                los filtros o abre &quot;Ver detalle&quot; para ver rin, medida y
-                modelo; desde ahí puedes escribirnos por WhatsApp.
+                Explora las llantas disponibles por marca, medida y precio. Abre
+                cada ficha para revisar detalles como rin, modelo, stock y
+                opciones de consulta por WhatsApp.
               </p>
             </div>
             <Link

@@ -6,6 +6,7 @@ import { sendNewOrderPush } from '@/lib/push/send-new-order'
 const bodySchema = z.object({
   order_id: z.string().uuid(),
   customer_name: z.string().min(1).max(200),
+  customer_phone: z.string().max(20).optional().nullable(),
   total: z.number().finite().nonnegative(),
 })
 

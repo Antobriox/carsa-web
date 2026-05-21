@@ -168,7 +168,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <AdminNotifications />
         </header>
 
-        <main className="relative min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-gradient-to-b from-transparent via-carsa-primary/[0.02] to-transparent p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:p-5 md:p-6 md:pb-6">
+        <main className="relative min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:p-5 md:p-6 md:pb-6">
           <div className="mx-auto w-full min-w-0 max-w-7xl">{children}</div>
         </main>
       </div>

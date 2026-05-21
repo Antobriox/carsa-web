@@ -45,6 +45,7 @@ Incluye catálogo público, carrito de cotización, cuentas de cliente, área de
 - Promociones con imagen y popup en la web
 - Campana de notificaciones en tiempo real
 - Suscripción a notificaciones push en el navegador (opcional)
+- **Visitas al sitio** en el dashboard (visitantes únicos y clientes registrados; ver `scripts/site-visits.sql`)
 
 ### Seguridad
 

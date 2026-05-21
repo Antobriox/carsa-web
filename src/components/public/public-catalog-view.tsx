@@ -245,7 +245,7 @@ export function PublicCatalogView({
               }}
               className="text-xs font-semibold uppercase tracking-[0.22em] text-carsa-primary"
             >
-              Portoviejo · neumáticos · baterías · taller
+              Portoviejo · llantas · baterías · servicio automotriz
             </motion.p>
             <motion.h1
               variants={{
@@ -258,7 +258,7 @@ export function PublicCatalogView({
               }}
               className="mt-4 font-heading text-3xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-5xl sm:leading-[1.06] lg:text-[3.35rem]"
             >
-              Tu llanta o batería a un clic.
+              Llantas, baterías y servicios para tu vehículo en un solo lugar.
             </motion.h1>
             <motion.p
               variants={{
@@ -271,9 +271,9 @@ export function PublicCatalogView({
               }}
               className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
             >
-              Busca por medida o marca, revisa existencias en vivo y coordina con
-              nuestro equipo por WhatsApp. Sin complicaciones: tú eliges, CARSA
-              asesora.
+              Encuentra la medida que necesitas, revisa opciones disponibles y
+              coordina con nuestro equipo por WhatsApp. En CARSA te ayudamos a
+              elegir mejor antes de comprar.
             </motion.p>
 
             <motion.form
@@ -362,17 +362,17 @@ export function PublicCatalogView({
             {
               icon: Headphones,
               title: 'Asesoría por WhatsApp',
-              text: 'Escríbenos al WhatsApp de CARSA: te orientamos con medida y modelo para tu auto, dudas de compatibilidad, cotización y confirmación de stock antes de que vengas o pagues.',
+              text: 'Escríbenos y te ayudamos a confirmar la medida, compatibilidad y disponibilidad antes de comprar.',
             },
             {
               icon: ShieldCheck,
-              title: 'Compra segura',
-              text: 'Lo que ves en el catálogo (precio y disponibilidad) es lo que manejamos en tienda: sin cargos ocultos. Sabes qué llevas y cuánto pagas.',
+              title: 'Compra con confianza',
+              text: 'Consulta precios, stock y opciones disponibles con atención personalizada. Te guiamos para que elijas lo adecuado para tu vehículo.',
             },
             {
               icon: Wrench,
-              title: 'Instalación coordinada',
-              text: 'Si compras con nosotros, agendamos contigo la cita en taller: montaje de llanta o batería y, cuando aplica, alineación y balanceo en secuencia con nuestro equipo, sin saltar entre distintos sitios.',
+              title: 'Servicio coordinado',
+              text: 'Agenda instalación, alineación, balanceo o revisión de batería con nuestro equipo en taller.',
             },
           ].map((item, i) => (
             <motion.div
@@ -439,7 +439,7 @@ export function PublicCatalogView({
           id="llantas-destacadas"
           eyebrow="Selección"
           title="Llantas destacadas"
-          description="Selección de llantas marcadas como destacadas en el catálogo. El inventario completo está en la página de llantas."
+          description="Modelos recomendados por CARSA por su desempeño, disponibilidad y relación calidad-precio. Para ver más medidas y marcas, visita el catálogo completo."
         >
           {liveTires.length === 0 ? (
             <EmptyBlock label="llantas activas" />
@@ -470,7 +470,7 @@ export function PublicCatalogView({
           id="baterias-destacadas"
           eyebrow="Energía"
           title="Baterías destacadas"
-          description="Selección de baterías marcadas como destacadas en el catálogo. El inventario completo está en la página de baterías."
+          description="Opciones seleccionadas para vehículos livianos, con buen rendimiento y respaldo. Consulta compatibilidad antes de confirmar tu pedido."
         >
           {liveBatteries.length === 0 ? (
             <EmptyBlock label="baterías activas" />
@@ -501,7 +501,7 @@ export function PublicCatalogView({
           id="servicios"
           eyebrow="Taller"
           title="Servicios"
-          description="Procesos cuidados para que conduzcas con seguridad y comodidad. Cotiza o agenda por WhatsApp."
+          description="Servicios pensados para que conduzcas con seguridad y confianza. Coordina instalación, revisión, alineación o balanceo directamente con nuestro equipo."
         >
           {services.length === 0 ? (
             <EmptyBlock label="servicios activos" />

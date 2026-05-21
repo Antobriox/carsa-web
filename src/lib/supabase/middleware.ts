@@ -36,11 +36,17 @@ function isAdminPath(pathname: string): boolean {
   return pathname === '/admin' || pathname.startsWith('/admin/')
 }
 
+export type SessionUpdateResult = {
+  response: NextResponse
+  userId: string | null
+  role: ProfileRole | null
+}
+
 /**
  * Refresca la sesión de Supabase y aplica reglas de rol (admin vs público).
  * @see https://supabase.com/docs/guides/auth/server-side/nextjs
  */
-export async function updateSession(request: NextRequest) {
+export async function updateSession(request: NextRequest): Promise<SessionUpdateResult> {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -93,30 +99,43 @@ export async function updateSession(request: NextRequest) {
   }
 
   const isAdmin = role === 'admin'
+  const userId = user?.id ?? null
 
   if (skipRoleLookup) {
-    return supabaseResponse
+    return { response: supabaseResponse, userId, role }
   }
 
   if (isAdmin && !isAdminPath(pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = '/admin'
     url.search = ''
-    return redirectPreservingSessionCookies(url, supabaseResponse)
+    return {
+      response: redirectPreservingSessionCookies(url, supabaseResponse),
+      userId,
+      role,
+    }
   }
 
   if (isAdminPath(pathname)) {
     if (!user) {
       const login = new URL('/login', request.nextUrl.origin)
       login.searchParams.set('next', pathname + request.nextUrl.search)
-      return redirectPreservingSessionCookies(login, supabaseResponse)
+      return {
+        response: redirectPreservingSessionCookies(login, supabaseResponse),
+        userId,
+        role,
+      }
     }
     if (!isAdmin) {
       const cuenta = new URL('/cuenta', request.nextUrl.origin)
       cuenta.searchParams.set('admin', 'forbidden')
-      return redirectPreservingSessionCookies(cuenta, supabaseResponse)
+      return {
+        response: redirectPreservingSessionCookies(cuenta, supabaseResponse),
+        userId,
+        role,
+      }
     }
   }
 
-  return supabaseResponse
+  return { response: supabaseResponse, userId, role }
 }

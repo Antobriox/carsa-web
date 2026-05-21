@@ -60,9 +60,9 @@ export default async function BateriasPage() {
                 Catálogo de baterías
               </h1>
               <p className="mt-2 max-w-2xl text-muted-foreground">
-                Todas las baterías activas con marca y precio. Abre cada ficha
-                con &quot;Ver detalle&quot; para ver datos técnicos y consultar
-                por WhatsApp.
+                Revisa las baterías disponibles y consulta sus características
+                principales. Verifica amperaje, voltaje, polaridad, garantía y
+                compatibilidad antes de pedir.
               </p>
             </div>
             <Link

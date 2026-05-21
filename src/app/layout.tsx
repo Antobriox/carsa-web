@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "CARSA — Llantas, baterías y servicio automotriz",
+    default: "CARSA",
     template: "%s · CARSA",
   },
   description:

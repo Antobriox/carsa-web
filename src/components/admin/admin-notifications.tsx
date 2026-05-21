@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/context/auth-context'
+import { formatAdminNotificationMessage } from '@/lib/admin/notification-display'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { AdminNotification } from '@/types/admin-notifications'
@@ -44,12 +45,14 @@ export function AdminNotifications() {
   const isAdmin = profile?.role === 'admin'
 
   const [notifications, setNotifications] = useState<AdminNotification[]>([])
+  const [orderPhones, setOrderPhones] = useState<Map<string, string>>(new Map())
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const seenIdsRef = useRef<Set<string>>(new Set())
+  const orderPhonesRef = useRef<Map<string, string>>(new Map())
   const initialLoadDoneRef = useRef(false)
 
   const userId = user?.id
@@ -79,7 +82,29 @@ export function AdminNotifications() {
       (readsRes.data ?? []).map((r) => r.notification_id as string)
     )
 
+    const orderIds = [
+      ...new Set(
+        rows.map((n) => n.order_id).filter((id): id is string => Boolean(id))
+      ),
+    ]
+
+    const phoneMap = new Map<string, string>()
+    if (orderIds.length > 0) {
+      const { data: orderRows } = await supabase
+        .from('orders')
+        .select('id, customer_phone')
+        .in('id', orderIds)
+
+      for (const o of orderRows ?? []) {
+        const id = o.id as string
+        const ph = (o.customer_phone as string | null)?.trim()
+        if (ph) phoneMap.set(id, ph)
+      }
+    }
+
     setNotifications(rows)
+    orderPhonesRef.current = phoneMap
+    setOrderPhones(phoneMap)
     setReadIds(readSet)
 
     if (!initialLoadDoneRef.current) {
@@ -126,12 +151,32 @@ export function AdminNotifications() {
             return [row, ...prev].slice(0, 30)
           })
 
-          setToastMessage(
-            row.title?.trim()
-              ? `${row.title}${row.message?.trim() ? ` — ${row.message}` : ''}`
-              : row.message?.trim() || 'Tienes un aviso nuevo'
-          )
-          setToastOpen(true)
+          void (async () => {
+            const phoneMap = new Map(orderPhonesRef.current)
+            if (row.order_id) {
+              const { data: orderRow } = await supabase
+                .from('orders')
+                .select('customer_phone')
+                .eq('id', row.order_id)
+                .maybeSingle()
+              const ph = (orderRow?.customer_phone as string | null)?.trim()
+              if (ph) {
+                phoneMap.set(row.order_id, ph)
+                orderPhonesRef.current = new Map(orderPhonesRef.current).set(
+                  row.order_id,
+                  ph
+                )
+                setOrderPhones(orderPhonesRef.current)
+              }
+            }
+            const displayMessage = formatAdminNotificationMessage(row, phoneMap)
+            setToastMessage(
+              row.title?.trim()
+                ? `${row.title}${displayMessage ? ` — ${displayMessage}` : ''}`
+                : displayMessage || 'Tienes un aviso nuevo'
+            )
+            setToastOpen(true)
+          })()
         }
       )
       .subscribe()
@@ -290,7 +335,7 @@ export function AdminNotifications() {
                         {n.title}
                       </span>
                       <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                        {n.message}
+                        {formatAdminNotificationMessage(n, orderPhones)}
                       </span>
                       <span className="mt-1 block text-[0.65rem] text-muted-foreground/80">
                         {formatWhen(n.created_at)}

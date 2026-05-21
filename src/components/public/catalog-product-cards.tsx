@@ -33,6 +33,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useCatalogCartAdd } from '@/hooks/use-catalog-cart-add'
+import {
+  formatTireDisplayTitle,
+  tireToDisplayInput,
+} from '@/lib/catalog-tire-display'
 import { formatMxn } from '@/lib/format'
 import {
   resolveBatteryDisplayImage,
@@ -64,6 +68,8 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
   const { tryAddToCart, adminNotice, dismissAdminNotice, authLoading } =
     useCatalogCartAdd()
   const brand = joinBrandName(tire.tire_brands)
+  const displayTitle = formatTireDisplayTitle(tireToDisplayInput(tire))
+  const subtitle = brand || null
   const lowStock = tire.stock > 0 && tire.stock < 5
   const tireImageSrc = resolveTireDisplayImage(tire)
   const unitPrice = priceNumber(tire.price)
@@ -73,9 +79,7 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
   const lineTotal = unitPrice * (maxQty > 0 ? safeQty : 0)
 
   const tireWhatsApp = buildWhatsAppUrl(
-    `Hola CARSA, me interesa cotizar la llanta ${tire.name}${
-      brand ? ` (${brand})` : ''
-    }. Medida ${tire.size}, rin ${tire.rim}.`
+    `Hola CARSA, me interesa cotizar la llanta ${displayTitle}.`
   )
 
   const handleDialogOpenChange = (next: boolean) => {
@@ -100,7 +104,7 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
               'cursor-pointer transition-colors hover:bg-carsa-surface',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-carsa-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card'
             )}
-            aria-label={`Ver detalle de ${tire.name}`}
+            aria-label={`Ver detalle de ${displayTitle}`}
           >
             {tireImageSrc ? (
               <Image
@@ -126,10 +130,12 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
             )}
           </button>
           <CardHeader className="border-b border-border/60 pb-3">
-            <CardTitle className="text-base leading-snug">{tire.name}</CardTitle>
-            {brand ? (
+            <CardTitle className="line-clamp-2 text-base leading-snug">
+              {displayTitle}
+            </CardTitle>
+            {subtitle ? (
               <p className="text-xs font-medium uppercase tracking-wider text-carsa-neutral">
-                {brand}
+                {subtitle}
               </p>
             ) : null}
           </CardHeader>
@@ -195,11 +201,11 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-3 py-3 sm:max-h-[min(88dvh,620px)] sm:gap-2.5 sm:overflow-y-visible sm:px-4 sm:py-3.5">
               <DialogHeader className="shrink-0 gap-0.5 space-y-0 text-left">
                 <DialogTitle className="font-heading text-base leading-tight sm:text-lg">
-                  {tire.name}
+                  {displayTitle}
                 </DialogTitle>
-                {brand ? (
-                  <DialogDescription className="text-[0.65rem] font-medium uppercase tracking-wider text-carsa-neutral sm:text-xs">
-                    {brand}
+                {subtitle ? (
+                  <DialogDescription className="text-xs text-carsa-neutral sm:text-sm">
+                    {subtitle}
                   </DialogDescription>
                 ) : (
                   <DialogDescription className="sr-only">
@@ -363,7 +369,7 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
                             {
                               item_type: 'tire',
                               item_id: tire.id,
-                              item_name: tire.name,
+                              item_name: displayTitle,
                               image_url: tireImageSrc.trim()
                                 ? tireImageSrc
                                 : null,

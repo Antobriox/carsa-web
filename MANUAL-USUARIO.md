@@ -101,6 +101,7 @@ Solo usuarios con rol **administrador** acceden a `/admin`. Si entras con cuenta
 
 Resumen con:
 
+- **Visitas al sitio:** clientes registrados, visitantes únicos (hoy, 7 y 30 días), clientes con sesión hoy y páginas vistas hoy (requiere activar el script SQL del proyecto; ver aviso en el dashboard si aún no está configurado).
 - Cantidad de llantas, baterías y servicios activos.
 - Productos con **stock bajo**.
 - Pedidos pendientes de atención.

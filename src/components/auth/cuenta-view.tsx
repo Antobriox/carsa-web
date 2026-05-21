@@ -7,6 +7,7 @@ import { motion } from 'motion/react'
 import { ChevronRight, Loader2, LogOut, Package, Shield } from 'lucide-react'
 
 import { AuthPageShell } from '@/components/auth/auth-page-shell'
+import { ProfilePhoneForm } from '@/components/auth/profile-phone-form'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -29,6 +30,7 @@ export function CuentaView({
   email,
   adminAccessDenied = false,
   orderJustPlaced = false,
+  needsPhone = false,
 }: {
   profile: Profile
   email: string
@@ -36,6 +38,8 @@ export function CuentaView({
   adminAccessDenied?: boolean
   /** True si llegó tras confirmar un pedido desde el carrito. */
   orderJustPlaced?: boolean
+  /** True si llegó desde el carrito sin teléfono en el perfil. */
+  needsPhone?: boolean
 }) {
   const router = useRouter()
   const { clearClientSession } = useAuth()
@@ -80,6 +84,8 @@ export function CuentaView({
   }
 
   const isAdmin = profile.role === 'admin'
+  const phoneMissing = !profile.phone?.trim()
+  const phoneDisplay = profile.phone?.trim() || null
 
   return (
     <AuthPageShell className="max-w-lg">
@@ -91,6 +97,14 @@ export function CuentaView({
           >
             Pedido enviado correctamente. CARSA se pondrá en contacto contigo para
             confirmar disponibilidad.
+          </div>
+        ) : null}
+        {phoneMissing || needsPhone ? (
+          <div
+            role="status"
+            className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100"
+          >
+            Completa tu número de WhatsApp para poder realizar pedidos.
           </div>
         ) : null}
         {adminAccessDenied ? (
@@ -128,10 +142,12 @@ export function CuentaView({
                   {profile.full_name ?? '—'}
                 </span>
               </div>
-              <div className="flex justify-between gap-4 border-b border-border/50 py-2">
-                <span className="text-muted-foreground">Teléfono</span>
-                <span className="text-right font-medium text-foreground">
-                  {profile.phone ?? '—'}
+              <div className="flex flex-col gap-2 border-b border-border/50 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <span className="text-muted-foreground">WhatsApp / teléfono</span>
+                <span className="font-medium text-foreground sm:text-right">
+                  {phoneDisplay ?? (
+                    <span className="text-amber-300">Sin registrar</span>
+                  )}
                 </span>
               </div>
               <div className="flex justify-between gap-4 border-b border-border/50 py-2">
@@ -149,6 +165,27 @@ export function CuentaView({
             </CardContent>
           </Card>
         </motion.div>
+
+        {!isAdmin ? (
+          <Card className="border-border/70 bg-muted/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">
+                {phoneMissing ? 'Agregar WhatsApp' : 'Actualizar WhatsApp'}
+              </CardTitle>
+              <CardDescription>
+                {phoneMissing
+                  ? 'Es obligatorio para que CARSA confirme tus pedidos.'
+                  : 'Puedes corregir tu número si cambió.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProfilePhoneForm
+                initialPhone={profile.phone}
+                onSaved={() => router.refresh()}
+              />
+            </CardContent>
+          </Card>
+        ) : null}
 
         {isAdmin ? (
           <Link

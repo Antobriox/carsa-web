@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Eye } from 'lucide-react'
 
+import { CustomerWhatsAppButton } from '@/components/admin/customer-whatsapp-button'
 import { AdminFloatingToast } from '@/components/admin/admin-floating-toast'
 import { AdminLabeledSelectValue } from '@/components/admin/admin-labeled-select-value'
 import { Badge } from '@/components/ui/badge'
@@ -336,7 +337,17 @@ export function OrdersAdminPanel() {
                         {order.customer_name?.trim() || 'Cliente sin nombre'}
                       </p>
                     </TableCell>
-                    <TableCell>{order.customer_phone?.trim() || '—'}</TableCell>
+                    <TableCell className="min-w-[10rem]">
+                      {order.customer_phone?.trim() ? (
+                        <p className="font-medium tabular-nums">
+                          {order.customer_phone.trim()}
+                        </p>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          Sin teléfono registrado
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="max-w-[240px]">
                       <p className="truncate" title={order.customer_email ?? ''}>
                         {order.customer_email?.trim() || '—'}
@@ -389,9 +400,15 @@ export function OrdersAdminPanel() {
                     {selectedOrder.customer_name?.trim() || 'Cliente sin nombre'}
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Teléfono</p>
-                  <p className="text-sm">{selectedOrder.customer_phone?.trim() || '—'}</p>
+                <div className="space-y-2 sm:col-span-2">
+                  <p className="text-xs text-muted-foreground">Teléfono / WhatsApp</p>
+                  <p className="text-sm font-medium tabular-nums">
+                    {selectedOrder.customer_phone?.trim() || 'Sin teléfono registrado'}
+                  </p>
+                  <CustomerWhatsAppButton
+                    phone={selectedOrder.customer_phone}
+                    customerName={selectedOrder.customer_name}
+                  />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Correo</p>

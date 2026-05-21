@@ -46,6 +46,10 @@ import {
 } from '@/lib/user-facing-error'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { uploadProductImage } from '@/lib/supabase/storage-product-image'
+import {
+  formatTireDisplayTitle,
+  tireToDisplayInput,
+} from '@/lib/catalog-tire-display'
 import type { AdminTire, AdminTireBrand } from '@/types/admin'
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -414,7 +418,7 @@ export function TiresAdminPanel() {
           <Table>
             <TableHeader>
               <TableRow className="border-border/60 hover:bg-transparent">
-                <TableHead>Nombre</TableHead>
+                <TableHead>Producto</TableHead>
                 <TableHead>Rin</TableHead>
                 <TableHead>Medida</TableHead>
                 <TableHead>Precio</TableHead>
@@ -431,11 +435,15 @@ export function TiresAdminPanel() {
                   </TableCell>
                 </TableRow>
               ) : (
-                tires.map((t) => (
+                tires.map((t) => {
+                  const displayTitle = formatTireDisplayTitle(
+                    tireToDisplayInput(t)
+                  )
+                  return (
                   <TableRow key={t.id} className="border-border/50">
                     <TableCell className="max-w-[420px]">
-                      <p className="truncate font-medium" title={t.name}>
-                        {t.name}
+                      <p className="truncate font-medium" title={displayTitle}>
+                        {displayTitle}
                       </p>
                     </TableCell>
                     <TableCell className="font-mono tabular-nums">{t.rim}&quot;</TableCell>
@@ -489,7 +497,7 @@ export function TiresAdminPanel() {
                         size="icon-sm"
                         className="text-carsa-primary"
                         onClick={() => openEdit(t)}
-                        aria-label={`Editar ${t.name}`}
+                        aria-label={`Editar ${displayTitle}`}
                       >
                         <Pencil className="size-4" />
                       </Button>
@@ -499,13 +507,13 @@ export function TiresAdminPanel() {
                         size="icon-sm"
                         className="text-destructive"
                         onClick={() => setDeleteTarget(t)}
-                        aria-label={`Eliminar ${t.name}`}
+                        aria-label={`Eliminar ${displayTitle}`}
                       >
                         <Trash2 className="size-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))
+                )})
               )}
             </TableBody>
           </Table>
@@ -577,8 +585,12 @@ export function TiresAdminPanel() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="t-name">Nombre</Label>
-              <Input id="t-name" {...register('name')} />
+              <Label htmlFor="t-name">Nombre o línea</Label>
+              <Input id="t-name" placeholder="Ej. Kyton" {...register('name')} />
+              <p className="text-xs text-muted-foreground">
+                La medida, el rin y el modelo se muestran solos en el catálogo y
+                pedidos; no hace falta repetirlos aquí.
+              </p>
               <FieldError message={errors.name?.message} />
             </div>
 

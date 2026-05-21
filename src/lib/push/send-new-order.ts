@@ -10,6 +10,7 @@ import {
 export type SendNewOrderPushInput = {
   order_id: string
   customer_name: string
+  customer_phone?: string | null
   total: number
 }
 
@@ -20,9 +21,15 @@ export type SendNewOrderPushResult = {
   message?: string
 }
 
-function buildPushPayload(customerName: string, total: number) {
+function buildPushPayload(
+  customerName: string,
+  total: number,
+  customerPhone?: string | null
+) {
   const title = 'Nuevo pedido recibido'
-  const body = `Cliente: ${customerName.trim() || 'Cliente'} · Total: ${formatMxn(total)}`
+  const phone = customerPhone?.trim()
+  const phoneSeg = phone ? ` · WhatsApp: ${phone}` : ''
+  const body = `Cliente: ${customerName.trim() || 'Cliente'}${phoneSeg} · Total: ${formatMxn(total)}`
   return {
     title,
     body,
@@ -44,7 +51,8 @@ export async function sendNewOrderPush(
   const supabase = createServiceSupabase()
   const { title, body, payload } = buildPushPayload(
     input.customer_name,
-    input.total
+    input.total,
+    input.customer_phone
   )
 
   const { data: notificationRow } = await supabase

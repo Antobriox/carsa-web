@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { CustomerWhatsAppButton } from '@/components/admin/customer-whatsapp-button'
 import { buttonVariants } from '@/components/ui/button'
 import { formatMxn } from '@/lib/format'
 import { formatDate, pickField, pickNumber } from '@/lib/admin/row-display'
@@ -50,6 +51,14 @@ export default async function AdminPedidoDetailPage({
     'nombre',
     'name',
   ])
+  const customerPhone = pickField(row, [
+    'phone',
+    'telefono',
+    'customer_phone',
+    'tel',
+  ])
+  const phoneForWa =
+    customerPhone !== '—' ? customerPhone : null
 
   return (
     <div className="space-y-6">
@@ -75,15 +84,18 @@ export default async function AdminPedidoDetailPage({
           <dt className="text-muted-foreground">Cliente</dt>
           <dd className="font-medium">{customerName}</dd>
         </div>
-        <div>
-          <dt className="text-muted-foreground">Teléfono</dt>
-          <dd>
-            {pickField(row, [
-              'phone',
-              'telefono',
-              'customer_phone',
-              'tel',
-            ])}
+        <div className="sm:col-span-2">
+          <dt className="text-muted-foreground">Teléfono / WhatsApp</dt>
+          <dd className="mt-1 space-y-2">
+            <span className="font-medium">
+              {phoneForWa ?? 'Sin teléfono registrado'}
+            </span>
+            <div>
+              <CustomerWhatsAppButton
+                phone={phoneForWa}
+                customerName={customerName !== '—' ? customerName : undefined}
+              />
+            </div>
           </dd>
         </div>
         <div>
