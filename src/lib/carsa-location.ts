@@ -1,6 +1,6 @@
-/** Dirección y enlace oficial de ubicación CARSA (Montecristi, Manabí). */
+/** Dirección visible y enlace oficial de ubicación CARSA (Portoviejo, Manabí). */
 export const CARSA_ADDRESS =
-  'Avenida Metropolitana, Montecristi, Manabí, Ecuador'
+  'Avenida Metropolitana, Portoviejo, Manabí, Ecuador'
 
 export const CARSA_GOOGLE_MAPS_URL =
   'https://maps.app.goo.gl/diUBwDi7iNin5kt1A?g_st=iw'
