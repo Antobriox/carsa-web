@@ -38,6 +38,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { TireLoadingIcon } from '@/components/ui/tire-loading-icon'
 import { useSupabaseTableDebouncedRefresh } from '@/hooks/use-supabase-table-debounced-refresh'
 import { batterySchema, type BatteryFormValues } from '@/lib/admin/schemas'
+import { formatBatteryDisplayTitle } from '@/lib/catalog-battery-display'
 import { publishCatalogInventoryBroadcast } from '@/lib/catalog-inventory-broadcast'
 import { devError } from '@/lib/dev-log'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
@@ -69,6 +70,21 @@ function getErrorMessage(error: unknown) {
   return String(error)
 }
 
+function normalizeSearchText(value: unknown): string {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+}
+
+function batteryBrandName(
+  brand: AdminBattery['battery_brands']
+): string | undefined {
+  if (!brand) return undefined
+  if (Array.isArray(brand)) return brand[0]?.name?.trim() || undefined
+  return brand.name?.trim() || undefined
+}
+
 export function BatteriesAdminPanel() {
   const supabase = useMemo(() => createSupabaseBrowser(), [])
   const [brands, setBrands] = useState<AdminBatteryBrand[]>([])
@@ -89,6 +105,7 @@ export function BatteriesAdminPanel() {
   const [deleteTarget, setDeleteTarget] = useState<AdminBattery | null>(null)
   const [saving, setSaving] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [search, setSearch] = useState('')
 
   const form = useForm<BatteryFormValues>({
     resolver: zodResolver(batterySchema) as Resolver<BatteryFormValues>,
@@ -385,6 +402,33 @@ export function BatteriesAdminPanel() {
 
   const displayImageSrc = previewUrl || imageUrlForm?.trim() || null
 
+  const filteredRows = useMemo(() => {
+    const term = normalizeSearchText(search.trim())
+    if (!term) return rows
+
+    return rows.filter((battery) => {
+      const displayTitle = formatBatteryDisplayTitle({
+        name: battery.name,
+        model: battery.model,
+        amperage: battery.amperage,
+      })
+      const brand = batteryBrandName(battery.battery_brands)
+      const parts = [
+        displayTitle,
+        brand,
+        battery.supplier_code,
+        battery.name,
+        battery.model,
+        battery.amperage,
+        battery.voltage,
+        battery.polarity,
+        battery.description,
+      ]
+
+      return parts.some((part) => normalizeSearchText(part).includes(term))
+    })
+  }, [rows, search])
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -420,6 +464,36 @@ export function BatteriesAdminPanel() {
         onDismiss={dismissFeedback}
       />
 
+      <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="space-y-2">
+          <Label htmlFor="batteries-admin-search">Buscar baterías</Label>
+          <Input
+            id="batteries-admin-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Producto, marca, código, modelo o amperaje"
+            className="h-10 border-border bg-background/80"
+          />
+        </div>
+        {search.trim() ? (
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <span>
+              {filteredRows.length} resultado
+              {filteredRows.length === 1 ? '' : 's'}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-carsa-primary"
+              onClick={() => setSearch('')}
+            >
+              Limpiar
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
       <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -429,7 +503,7 @@ export function BatteriesAdminPanel() {
           <Table>
             <TableHeader>
               <TableRow className="border-border/60 hover:bg-transparent">
-                <TableHead>Nombre</TableHead>
+                <TableHead>Producto</TableHead>
                 <TableHead>Amp. / V</TableHead>
                 <TableHead>Precio</TableHead>
                 <TableHead className="w-24">Stock</TableHead>
@@ -444,12 +518,25 @@ export function BatteriesAdminPanel() {
                     No hay baterías registradas.
                   </TableCell>
                 </TableRow>
+              ) : filteredRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    No hay baterías que coincidan con la búsqueda.
+                  </TableCell>
+                </TableRow>
               ) : (
-                rows.map((t) => (
+                filteredRows.map((t) => {
+                  const displayTitle = formatBatteryDisplayTitle({
+                    name: t.name,
+                    model: t.model,
+                    amperage: t.amperage,
+                  })
+
+                  return (
                   <TableRow key={t.id} className="border-border/50">
                     <TableCell className="max-w-[420px]">
-                      <p className="truncate font-medium" title={t.name}>
-                        {t.name}
+                      <p className="truncate font-medium" title={displayTitle}>
+                        {displayTitle}
                       </p>
                     </TableCell>
                     <TableCell className="text-sm tabular-nums">
@@ -502,7 +589,7 @@ export function BatteriesAdminPanel() {
                         size="icon-sm"
                         className="text-carsa-primary"
                         onClick={() => openEdit(t)}
-                        aria-label={`Editar ${t.name}`}
+                        aria-label={`Editar ${displayTitle}`}
                       >
                         <Pencil className="size-4" />
                       </Button>
@@ -512,13 +599,14 @@ export function BatteriesAdminPanel() {
                         size="icon-sm"
                         className="text-destructive"
                         onClick={() => setDeleteTarget(t)}
-                        aria-label={`Eliminar ${t.name}`}
+                        aria-label={`Eliminar ${displayTitle}`}
                       >
                         <Trash2 className="size-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))
+                  )
+                })
               )}
             </TableBody>
           </Table>

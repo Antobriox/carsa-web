@@ -15,7 +15,6 @@ import {
   Wrench,
 } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useRouter } from 'next/navigation'
 import { useMemo, useRef, useState } from 'react'
 
 import {
@@ -161,12 +160,12 @@ export function PublicCatalogView({
   heroBatteryImageUrl,
   popupPromotions,
 }: CatalogPageProps) {
-  const router = useRouter()
   const promotionPopupRef = useRef<PromotionPopupHandle>(null)
   const [query, setQuery] = useState('')
   const hasPopupPromotions = popupPromotions.length > 0
   const liveTires = useTiresInventoryRealtime(tires)
   const liveBatteries = useBatteriesInventoryRealtime(batteries)
+  const q = query.trim()
 
   const featuredTires = useMemo(
     () => liveTires.filter((t) => t.is_featured),
@@ -176,13 +175,19 @@ export function PublicCatalogView({
     () => liveBatteries.filter((b) => b.is_featured),
     [liveBatteries]
   )
-  const filteredFeaturedTires = useMemo(
-    () => featuredTires.filter((t) => tireMatchesQuery(query, t)),
-    [featuredTires, query]
+  const tireResults = useMemo(
+    () =>
+      q
+        ? liveTires.filter((t) => tireMatchesQuery(q, t))
+        : featuredTires,
+    [liveTires, featuredTires, q]
   )
-  const filteredFeaturedBatteries = useMemo(
-    () => featuredBatteries.filter((b) => batteryMatchesQuery(query, b)),
-    [featuredBatteries, query]
+  const batteryResults = useMemo(
+    () =>
+      q
+        ? liveBatteries.filter((b) => batteryMatchesQuery(q, b))
+        : featuredBatteries,
+    [liveBatteries, featuredBatteries, q]
   )
   const displayServices = useMemo(
     () => mergeAlignmentBalanceServices(services),
@@ -196,20 +201,29 @@ export function PublicCatalogView({
   const workshopWhatsApp = buildWhatsAppUrl(
     'Hola CARSA, quiero cotización / cita en taller.'
   )
-  const q = query.trim()
+  const scrollToCatalogResults = () => {
+    const targetId =
+      q && tireResults.length === 0 && batteryResults.length > 0
+        ? 'baterias-destacadas'
+        : 'llantas-destacadas'
+    document.getElementById(targetId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
 
   return (
     <div className="flex flex-col">
       <section
         id="inicio"
-        className="relative min-h-[min(68vh,38rem)] scroll-mt-28 overflow-hidden border-b border-border/60 sm:min-h-[42vh] md:min-h-[36vh] lg:min-h-0 sm:scroll-mt-32"
+        className="relative min-h-[min(68vh,38rem)] scroll-mt-28 overflow-hidden border-b border-border/60 bg-black sm:min-h-[42vh] md:min-h-[36vh] lg:min-h-0 sm:scroll-mt-32"
       >
         <Image
           src="/Imagen/CARSARportada.png"
           alt=""
           fill
-          priority
-          className="z-0 object-cover object-center"
+          preload
+          className="z-0 object-fill lg:object-cover lg:object-center"
           sizes="100vw"
           aria-hidden
         />
@@ -288,8 +302,7 @@ export function PublicCatalogView({
               className="mt-8 max-w-2xl"
               onSubmit={(e) => {
                 e.preventDefault()
-                const t = query.trim()
-                router.push(t ? `/llantas?q=${encodeURIComponent(t)}` : '/llantas')
+                scrollToCatalogResults()
               }}
             >
               <div className="flex flex-col gap-2 rounded-2xl border border-border/90 bg-card/95 p-2 shadow-lg shadow-black/20 ring-1 ring-white/5 sm:flex-row sm:items-center sm:gap-0 sm:pl-4">
@@ -301,7 +314,7 @@ export function PublicCatalogView({
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Buscar por medida (ej. 205/55R16) o marca…"
+                    placeholder="Buscar llantas o baterías..."
                     className="h-11 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 md:text-base"
                     aria-label="Buscar en catálogo"
                   />
@@ -438,12 +451,12 @@ export function PublicCatalogView({
         <SectionShell
           id="llantas-destacadas"
           eyebrow="Selección"
-          title="Llantas destacadas"
+          title={q ? 'Resultados en llantas' : 'Llantas destacadas'}
           description="Modelos recomendados por CARSA por su desempeño, disponibilidad y relación calidad-precio. Para ver más medidas y marcas, visita el catálogo completo."
         >
           {liveTires.length === 0 ? (
             <EmptyBlock label="llantas activas" />
-          ) : featuredTires.length === 0 ? (
+          ) : !q && featuredTires.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Aún no hay llantas marcadas como destacadas. Puedes revisar todo
@@ -459,22 +472,22 @@ export function PublicCatalogView({
                 Ver catálogo de llantas
               </Link>
             </div>
-          ) : filteredFeaturedTires.length === 0 ? (
+          ) : tireResults.length === 0 ? (
             <FilterEmpty onClear={() => setQuery('')} />
           ) : (
-            <TireProductGrid tires={filteredFeaturedTires} />
+            <TireProductGrid tires={tireResults} />
           )}
         </SectionShell>
 
         <SectionShell
           id="baterias-destacadas"
           eyebrow="Energía"
-          title="Baterías destacadas"
+          title={q ? 'Resultados en baterías' : 'Baterías destacadas'}
           description="Opciones seleccionadas para vehículos livianos, con buen rendimiento y respaldo. Consulta compatibilidad antes de confirmar tu pedido."
         >
           {liveBatteries.length === 0 ? (
             <EmptyBlock label="baterías activas" />
-          ) : featuredBatteries.length === 0 ? (
+          ) : !q && featuredBatteries.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Aún no hay baterías marcadas como destacadas. Consulta el
@@ -490,10 +503,10 @@ export function PublicCatalogView({
                 Ver catálogo de baterías
               </Link>
             </div>
-          ) : filteredFeaturedBatteries.length === 0 ? (
+          ) : batteryResults.length === 0 ? (
             <FilterEmpty onClear={() => setQuery('')} />
           ) : (
-            <BatteryProductGrid batteries={filteredFeaturedBatteries} />
+            <BatteryProductGrid batteries={batteryResults} />
           )}
         </SectionShell>
 
