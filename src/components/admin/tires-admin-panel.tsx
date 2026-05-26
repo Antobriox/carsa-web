@@ -48,6 +48,7 @@ import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { uploadProductImage } from '@/lib/supabase/storage-product-image'
 import {
   formatTireDisplayTitle,
+  tireBrandFromJoin,
   tireToDisplayInput,
 } from '@/lib/catalog-tire-display'
 import type { AdminTire, AdminTireBrand } from '@/types/admin'
@@ -77,6 +78,13 @@ function getErrorMessage(error: unknown) {
   return String(error)
 }
 
+function normalizeSearchText(value: unknown): string {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+}
+
 export function TiresAdminPanel() {
   const supabase = useMemo(() => createSupabaseBrowser(), [])
   const [brands, setBrands] = useState<AdminTireBrand[]>([])
@@ -97,6 +105,7 @@ export function TiresAdminPanel() {
   const [deleteTarget, setDeleteTarget] = useState<AdminTire | null>(null)
   const [saving, setSaving] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
+  const [search, setSearch] = useState('')
 
   const form = useForm<TireFormValues>({
     resolver: zodResolver(tireSchema) as Resolver<TireFormValues>,
@@ -374,6 +383,28 @@ export function TiresAdminPanel() {
 
   const displayImageSrc = previewUrl || imageUrlForm?.trim() || null
 
+  const filteredTires = useMemo(() => {
+    const term = normalizeSearchText(search.trim())
+    if (!term) return tires
+
+    return tires.filter((t) => {
+      const displayTitle = formatTireDisplayTitle(tireToDisplayInput(t))
+      const brand = tireBrandFromJoin(t.tire_brands)
+      const parts = [
+        displayTitle,
+        brand,
+        t.supplier_code,
+        t.name,
+        t.size,
+        t.rim,
+        t.model,
+        t.description,
+      ]
+
+      return parts.some((part) => normalizeSearchText(part).includes(term))
+    })
+  }, [tires, search])
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -409,6 +440,36 @@ export function TiresAdminPanel() {
         onDismiss={dismissFeedback}
       />
 
+      <div className="grid gap-3 rounded-xl border border-border/70 bg-card/40 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="space-y-2">
+          <Label htmlFor="tires-admin-search">Buscar llantas</Label>
+          <Input
+            id="tires-admin-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Producto, marca, código, medida o modelo"
+            className="h-10 border-border bg-background/80"
+          />
+        </div>
+        {search.trim() ? (
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <span>
+              {filteredTires.length} resultado
+              {filteredTires.length === 1 ? '' : 's'}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-carsa-primary"
+              onClick={() => setSearch('')}
+            >
+              Limpiar
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
       <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border border-border/70 bg-card/40">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -434,8 +495,14 @@ export function TiresAdminPanel() {
                     No hay llantas registradas.
                   </TableCell>
                 </TableRow>
+              ) : filteredTires.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    No hay llantas que coincidan con la búsqueda.
+                  </TableCell>
+                </TableRow>
               ) : (
-                tires.map((t) => {
+                filteredTires.map((t) => {
                   const displayTitle = formatTireDisplayTitle(
                     tireToDisplayInput(t)
                   )

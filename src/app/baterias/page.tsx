@@ -23,8 +23,15 @@ export const metadata = {
   description: 'Catálogo completo de baterías CARSA en Portoviejo.',
 }
 
-export default async function BateriasPage() {
+type SearchParams = Promise<{ q?: string }>
+
+export default async function BateriasPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
   await redirectAdminToPanel()
+  const { q: initialQ } = await searchParams
   const { data, error } = await fetchActiveBatteries()
 
   if (error) {
@@ -84,7 +91,10 @@ export default async function BateriasPage() {
             No hay baterías activas en el catálogo.
           </p>
         ) : (
-          <BateriasCatalogLive batteries={batteries} />
+          <BateriasCatalogLive
+            batteries={batteries}
+            initialSearch={typeof initialQ === 'string' ? initialQ : ''}
+          />
         )}
       </div>
     </CatalogPageShell>

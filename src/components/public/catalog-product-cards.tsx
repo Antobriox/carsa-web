@@ -33,6 +33,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useCatalogCartAdd } from '@/hooks/use-catalog-cart-add'
+import { formatBatteryDisplayTitle } from '@/lib/catalog-battery-display'
 import {
   formatTireDisplayTitle,
   tireToDisplayInput,
@@ -420,6 +421,7 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
   const { tryAddToCart, adminNotice, dismissAdminNotice, authLoading } =
     useCatalogCartAdd()
   const brand = joinBrandName(battery.battery_brands)
+  const displayTitle = formatBatteryDisplayTitle(battery)
   const lowStock = battery.stock > 0 && battery.stock < 4
   const warrantyLabel =
     battery.warranty_months != null
@@ -433,7 +435,7 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
   const lineTotal = unitPrice * (maxQty > 0 ? safeQty : 0)
 
   const batteryWhatsApp = buildWhatsAppUrl(
-    `Hola CARSA, me interesa cotizar la batería ${battery.name}${
+    `Hola CARSA, me interesa cotizar la batería ${displayTitle}${
       brand ? ` (${brand})` : ''
     }.`
   )
@@ -460,7 +462,7 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
               'cursor-pointer transition-colors hover:bg-carsa-surface',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-carsa-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card'
             )}
-            aria-label={`Ver detalle de ${battery.name}`}
+            aria-label={`Ver detalle de ${displayTitle}`}
           >
             {batteryImageSrc ? (
               <Image
@@ -486,7 +488,9 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
             )}
           </button>
           <CardHeader className="border-b border-border/60 pb-3">
-            <CardTitle className="text-base leading-snug">{battery.name}</CardTitle>
+            <CardTitle className="line-clamp-2 text-base leading-snug">
+              {displayTitle}
+            </CardTitle>
             {brand ? (
               <p className="text-xs font-medium uppercase tracking-wider text-carsa-neutral">
                 {brand}
@@ -552,7 +556,7 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-3 py-3 sm:max-h-[min(88dvh,620px)] sm:gap-2.5 sm:overflow-y-visible sm:px-4 sm:py-3.5">
               <DialogHeader className="shrink-0 gap-0.5 space-y-0 text-left">
                 <DialogTitle className="font-heading text-base leading-tight sm:text-lg">
-                  {battery.name}
+                  {displayTitle}
                 </DialogTitle>
                 {brand ? (
                   <DialogDescription className="text-[0.65rem] font-medium uppercase tracking-wider text-carsa-neutral sm:text-xs">
@@ -734,7 +738,7 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
                             {
                               item_type: 'battery',
                               item_id: battery.id,
-                              item_name: battery.name,
+                              item_name: displayTitle,
                               image_url: batteryImageSrc.trim()
                                 ? batteryImageSrc
                                 : null,

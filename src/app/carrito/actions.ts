@@ -3,6 +3,7 @@
 import { z } from 'zod'
 
 import { getSessionWithProfile, hasRole } from '@/lib/auth/session'
+import { formatBatteryDisplayTitle } from '@/lib/catalog-battery-display'
 import {
   formatTireDisplayTitle,
   tireToDisplayInput,
@@ -159,7 +160,7 @@ export async function submitCartOrder(
 
     const { data, error } = await supabase
       .from('batteries')
-      .select('id, name, price, stock, is_active')
+      .select('id, name, model, amperage, price, stock, is_active')
       .eq('id', line.item_id)
       .maybeSingle()
 
@@ -181,7 +182,15 @@ export async function submitCartOrder(
     }
 
     const unit = round2(num(data.price))
-    const name = typeof data.name === 'string' ? data.name : 'Batería'
+    const name =
+      typeof data.name === 'string'
+        ? formatBatteryDisplayTitle({
+            name: data.name,
+            amperage:
+              typeof data.amperage === 'string' ? data.amperage : null,
+            model: typeof data.model === 'string' ? data.model : null,
+          })
+        : 'Batería'
     resolved.push({
       item_type: 'battery',
       item_id: data.id as string,
