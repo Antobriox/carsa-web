@@ -180,14 +180,14 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
           <div className="flex max-h-[inherit] min-h-0 flex-col overflow-hidden md:flex-row">
             {/* Columna imagen: altura fija en desktop para que el panel no exija scroll */}
             <div className="relative flex w-full shrink-0 items-center justify-center border-b border-border/50 bg-carsa-surface/80 md:w-[280px] md:border-b-0 md:border-r">
-              <div className="relative h-36 w-full sm:h-[260px] md:h-[280px]">
+              <div className="relative h-[clamp(16rem,78vw,21rem)] w-full sm:h-[260px] md:h-[280px]">
                 {tireImageSrc ? (
                   <Image
                     src={tireImageSrc}
                     alt=""
                     fill
                     sizes="(max-width: 640px) 100vw, 280px"
-                    className="object-contain p-3 sm:p-4"
+                    className="object-contain p-0.5 sm:p-4"
                     priority={false}
                   />
                 ) : (
@@ -199,7 +199,7 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
             </div>
 
             {/* Columna contenido: sin scroll en desktop; en móvil muy bajo solo si hace falta */}
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-3 py-3 sm:max-h-[min(88dvh,620px)] sm:gap-2.5 sm:overflow-y-visible sm:px-4 sm:py-3.5">
+            <div className="scrollbar-carsa flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-3 py-3 sm:max-h-[min(88dvh,620px)] sm:gap-2.5 sm:px-4 sm:py-3.5">
               <DialogHeader className="shrink-0 gap-0.5 space-y-0 text-left">
                 <DialogTitle className="font-heading text-base leading-tight sm:text-lg">
                   {displayTitle}
@@ -237,7 +237,7 @@ export function TireCard({ tire }: { tire: CatalogTire }) {
                   Descripción
                 </p>
                 <p
-                  className="mt-0.5 line-clamp-4 text-xs leading-snug text-foreground/90 sm:line-clamp-3 sm:text-sm sm:leading-relaxed"
+                  className="mt-0.5 whitespace-pre-wrap break-words text-xs leading-snug text-foreground/90 sm:text-sm sm:leading-relaxed"
                   title={
                     tire.description?.trim()
                       ? tire.description
@@ -536,14 +536,14 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
         >
           <div className="flex max-h-[inherit] min-h-0 flex-col overflow-hidden md:flex-row">
             <div className="relative flex w-full shrink-0 items-center justify-center border-b border-border/50 bg-carsa-surface/80 md:w-[280px] md:border-b-0 md:border-r">
-              <div className="relative h-36 w-full sm:h-[260px] md:h-[280px]">
+              <div className="relative h-[clamp(16rem,78vw,21rem)] w-full sm:h-[260px] md:h-[280px]">
                 {batteryImageSrc ? (
                   <Image
                     src={batteryImageSrc}
                     alt=""
                     fill
                     sizes="(max-width: 640px) 100vw, 280px"
-                    className="object-contain p-3 sm:p-4"
+                    className="object-contain p-0.5 sm:p-4"
                   />
                 ) : (
                   <div className="flex h-full min-h-[9rem] items-center justify-center text-muted-foreground sm:min-h-0">
@@ -553,7 +553,7 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
               </div>
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-3 py-3 sm:max-h-[min(88dvh,620px)] sm:gap-2.5 sm:overflow-y-visible sm:px-4 sm:py-3.5">
+            <div className="scrollbar-carsa flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-3 py-3 sm:max-h-[min(88dvh,620px)] sm:gap-2.5 sm:px-4 sm:py-3.5">
               <DialogHeader className="shrink-0 gap-0.5 space-y-0 text-left">
                 <DialogTitle className="font-heading text-base leading-tight sm:text-lg">
                   {displayTitle}
@@ -605,7 +605,7 @@ export function BatteryCard({ battery }: { battery: CatalogBattery }) {
                   Descripción
                 </p>
                 <p
-                  className="mt-0.5 line-clamp-4 text-xs leading-snug text-foreground/90 sm:line-clamp-3 sm:text-sm sm:leading-relaxed"
+                  className="mt-0.5 whitespace-pre-wrap break-words text-xs leading-snug text-foreground/90 sm:text-sm sm:leading-relaxed"
                   title={
                     battery.description?.trim()
                       ? battery.description

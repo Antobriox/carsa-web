@@ -169,6 +169,24 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+  .scrollbar-carsa {
+    scrollbar-color: #686868 #242424;
+    scrollbar-width: thin;
+  }
+  .scrollbar-carsa::-webkit-scrollbar {
+    width: 0.55rem;
+  }
+  .scrollbar-carsa::-webkit-scrollbar-track {
+    background: #242424;
+  }
+  .scrollbar-carsa::-webkit-scrollbar-thumb {
+    border: 2px solid #242424;
+    border-radius: 999px;
+    background: #686868;
+  }
+  .scrollbar-carsa::-webkit-scrollbar-thumb:hover {
+    background: #858585;
+  }
   .table-scroll {
     @apply -mx-1 min-w-0 max-w-full overflow-x-auto overscroll-x-contain;
   }
